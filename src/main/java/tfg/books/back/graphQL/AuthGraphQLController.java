@@ -33,7 +33,7 @@ public class AuthGraphQLController {
     }
 
     @QueryMapping
-    public UserLogin login(@Argument String email, @Argument String password) throws FirebaseAuthException {
+    public UserLogin login(@Argument("email") String email, @Argument("password") String password) throws FirebaseAuthException {
         FirebaseSignInResponse response = firebaseAuthClient.login(email, password);
         if (response.idToken() != null || !response.idToken().equals("")) {
             return new UserLogin(response.idToken(), response.refreshToken());
@@ -50,7 +50,7 @@ public class AuthGraphQLController {
     }
 
     @QueryMapping
-    public String refreshTocken(@Argument String oldRefreshTocken) throws FirebaseAuthException {
+    public String refreshTocken(@Argument("oldRefreshTocken") String oldRefreshTocken) throws FirebaseAuthException {
         RefreshTokenResponse response = firebaseAuthClient.exchangeRefreshToken(oldRefreshTocken);
         if (response.id_token() != null || !response.id_token().equals("")) {
             return response.id_token();
@@ -61,13 +61,13 @@ public class AuthGraphQLController {
     }
 
     @MutationMapping
-    public String creteUser(@Argument String email, @Argument String password)
+    public String createUser(@Argument("email") String email, @Argument("password") String password)
             throws FirebaseAuthException, AccountException {
         UserRecord userRecord = userService.create(email, password);
         if (userRecord != null) {
             FirebaseSignInResponse response = firebaseAuthClient.login(email, password);
             
-            firestore.collection("users").document(userRecord.getUid()).set(new User(userRecord.getEmail()));
+            firestore.collection("users").document(userRecord.getUid()).set(new User(userRecord.getEmail(),"",""));
             return response.idToken();
         } else {
             throw new InvalidParameterException("User not found");

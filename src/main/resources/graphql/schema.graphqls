@@ -1,11 +1,11 @@
 type Query{
     login(email: String, password: String): UserLogin
-    logout(userId: String): String
+    logout: String
     refreshTocken(oldRefreshTocken: String): String
 }
 
 type Mutation{
-    creteUser(email: String, password: String): String
+    createUser(email: String, password: String): String
 }
 
 type UserLogin{
