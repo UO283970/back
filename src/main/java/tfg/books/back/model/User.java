@@ -23,6 +23,8 @@ public class User {
     @NotNull
     private String userAlias;
     @NotNull
+    private String profilePictureURL;
+    @NotNull
     private String description;
     @NotNull
     private UserPrivacy userPrivacy;
@@ -35,7 +37,8 @@ public class User {
     @NotNull
     private int userReviewsCount;
 
-    public User(@NotNull String email, @NotNull String userName, @NotNull String userAlias, @NotNull String description,
+    public User(@NotNull String email, @NotNull String userName, @NotNull String userAlias,
+            @NotNull String profilePictureURL, @NotNull String description,
             @NotNull UserPrivacy userPrivacy, @NotNull UserFollowState userFollowState, @NotNull int followedUsersCount,
             @NotNull int followingUsersCount, @NotNull int userReviewsCount) {
         this.email = email;
@@ -49,8 +52,8 @@ public class User {
         this.userReviewsCount = userReviewsCount;
     }
 
-    public User(@NotNull String email, @NotNull String userName, @NotNull String userAlias) {
-        this(email, userName, userAlias, "", UserPrivacy.PUBLIC, UserFollowState.OWN, 0, 0, 0);
+    public User(@NotNull String email, @NotNull String userName,@NotNull String profilePictureURL, @NotNull String userAlias) {
+        this(email, userName, userAlias,profilePictureURL, "", UserPrivacy.PUBLIC, UserFollowState.OWN, 0, 0, 0);
     }
 
     public String getEmail() {

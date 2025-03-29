@@ -1,15 +1,31 @@
 type Query{
-    login(email: String, password: String): UserLogin
-    logout: String
-    refreshTocken(oldRefreshTocken: String): String
+    login(email: String!, password: String!): UserLogin!
+    logout: String!
+    refreshTocken(oldRefreshTocken: String!): String!
+    getBasicListInfo(id: String!): BookList
+    getAllListInfo(id: String!): BookList
 }
 
 type Mutation{
-    createUser(email: String, password: String): String
+    createUser(email: String!, password: String!, userAlias: String!, userName: String!, profilePictureURL: String!): UserLogin!
+    createList(listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): BookList!
 }
 
 type UserLogin{
-    userId: String
-    tockenId: String,
-    refreshTocken: String
+    tockenId: String!
+    refreshTocken: String!
+}
+
+enum BookListPrivacy{
+        PRIVATE,
+        PUBLIC,
+        ONLYFOLLOWERS
+}
+
+type BookList{
+    id: String!
+    listName: String!
+    numberOfBooks: [String!]!
+    bookListPrivacy: BookListPrivacy!
+    description: String!
 }

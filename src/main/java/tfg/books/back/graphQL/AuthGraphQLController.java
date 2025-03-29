@@ -26,14 +26,15 @@ public class AuthGraphQLController {
     private final UserService userService;
     private final Firestore firestore;
 
-    public AuthGraphQLController(FirebaseAuthClient firebaseAuthClient, UserService userService,Firestore firestore) {
+    public AuthGraphQLController(FirebaseAuthClient firebaseAuthClient, UserService userService, Firestore firestore) {
         this.firebaseAuthClient = firebaseAuthClient;
         this.userService = userService;
         this.firestore = firestore;
     }
 
     @QueryMapping
-    public UserLogin login(@Argument("email") String email, @Argument("password") String password) throws FirebaseAuthException {
+    public UserLogin login(@Argument("email") String email, @Argument("password") String password)
+            throws FirebaseAuthException {
         FirebaseSignInResponse response = firebaseAuthClient.login(email, password);
         if (response.idToken() != null || !response.idToken().equals("")) {
             return new UserLogin(response.idToken(), response.refreshToken());
@@ -61,14 +62,16 @@ public class AuthGraphQLController {
     }
 
     @MutationMapping
-    public String createUser(@Argument("email") String email, @Argument("password") String password)
+    public UserLogin createUser(@Argument("email") String email, @Argument("password") String password,
+            @Argument("userAlias") String userAlias, @Argument("userName") String userName,
+            @Argument("profilePictureURL") String profilePictureURL)
             throws FirebaseAuthException, AccountException {
         UserRecord userRecord = userService.create(email, password);
         if (userRecord != null) {
             FirebaseSignInResponse response = firebaseAuthClient.login(email, password);
-            
-            firestore.collection("users").document(userRecord.getUid()).set(new User(userRecord.getEmail(),"",""));
-            return response.idToken();
+            firestore.collection("users").document(userRecord.getUid())
+                    .set(new User(userRecord.getEmail(), userName, profilePictureURL, userAlias));
+            return new UserLogin(response.idToken(),response.refreshToken());
         } else {
             throw new InvalidParameterException("User not found");
         }
