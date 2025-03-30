@@ -1,25 +1,71 @@
 type Query{
+    #User queries
     login(email: String!, password: String!): UserLogin!
     logout: String!
-    refreshTocken(oldRefreshTocken: String!): String!
+    refreshToken(oldRefreshToken: String!): String!
+    getUserSearchInfo(userQuery: String!): [User!]!
+    getAuthenticatedUserInfo: User!
+    getAllUserInfo(userId: String!): User!
+    #List queries
     getBasicListInfo(id: String!): BookList
     getAllListInfo(id: String!): BookList
 }
 
 type Mutation{
+    #User mutations
     createUser(email: String!, password: String!, userAlias: String!, userName: String!, profilePictureURL: String!): UserLogin!
+    updateUser(userAlias: String!, userName: String!, profilePictureURL: String!, description: String!): UserLogin!
+    deleteUser: Boolean!
+
+    #Follow mutations
+    followUser(friendId: String!): Boolean!
+    cancelFollow(friendId: String!): Boolean!
+    acceptRequest(friendId: String!): Boolean!
+    cancelRequest(friendId: String!): Boolean!
+    deleteFromFollower(friendId: String!): Boolean!
+
+    #List mutations
     createList(listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): BookList!
+    updateList(listId: String!,listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): BookList!
+    deleteList(listId: String!): String!
+    addBookToList(listId: String!, bookId: String!): Boolean!
+    removeBookToList(listId: String!, bookId: String!): Boolean!
 }
 
 type UserLogin{
-    tockenId: String!
-    refreshTocken: String!
+    tokenId: String!
+    refreshToken: String!
+}
+
+type User{
+    userName: String!
+    userAlias: String!
+    userPhotoURL: String!
+    description: String!
+    userPrivacy: UserPrivacy!
+    userFollowState: UserFollowState!
+    followedUsersCount: Int!
+    followingUsersCount: Int!
+    userActivitiesCount: Int!
+    userLists: [BookList]!
+}
+
+enum UserPrivacy {
+    PRIVATE,
+    PUBLIC
+}
+
+enum UserFollowState {
+    FOLLOWING,
+    FOLLOWED,
+    OWN,
+    REQUESTED
 }
 
 enum BookListPrivacy{
-        PRIVATE,
-        PUBLIC,
-        ONLYFOLLOWERS
+    PRIVATE,
+    PUBLIC,
+    ONLY_FOLLOWERS
 }
 
 type BookList{

@@ -3,6 +3,7 @@ package tfg.books.back.security;
 import java.io.IOException;
 import java.util.Optional;
 
+import com.google.firebase.database.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -22,6 +23,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import reactor.util.annotation.NonNull;
 
 @Component
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
@@ -32,15 +34,15 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     private final FirebaseAuth firebaseAuth;
     private final ObjectMapper objectMapper;
- 
+
     public TokenAuthenticationFilter(FirebaseAuth firebaseAuth, ObjectMapper objectMapper) {
         this.firebaseAuth = firebaseAuth;
         this.objectMapper = objectMapper;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-            FilterChain filterChain) throws JsonProcessingException, IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws JsonProcessingException, IOException, ServletException {
         String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
 
         if (authorizationHeader != null && authorizationHeader.startsWith(BEARER_PREFIX)) {

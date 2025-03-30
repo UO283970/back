@@ -11,7 +11,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityFilterChain {
 
-  private TokenAuthenticationFilter tokenAuthenticationFilter;
+  private final TokenAuthenticationFilter tokenAuthenticationFilter;
 
   public SecurityFilterChain(TokenAuthenticationFilter tokenAuthenticationFilter) {
       this.tokenAuthenticationFilter = tokenAuthenticationFilter;

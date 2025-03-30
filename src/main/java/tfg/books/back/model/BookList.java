@@ -6,23 +6,23 @@ import java.util.List;
 import com.google.firebase.database.annotations.NotNull;
 
 public class BookList{
-    public enum BookListprivacy{
+    public enum BookListPrivacy {
         PRIVATE,
         PUBLIC,
-        ONLYFOLLOWERS
+        ONLY_FOLLOWERS
     }
 
 
     @NotNull
-    private String listName;
+    private final String listName;
     @NotNull
-    private List<String> bookListIds;
+    private final List<String> bookListIds;
     @NotNull
-    private String description;
+    private final String description;
     @NotNull
-    private BookListprivacy bookListprivacy;
+    private final BookListPrivacy bookListprivacy;
 
-    public BookList(@NotNull String listName, @NotNull List<String> bookListIds, @NotNull String description,@NotNull BookListprivacy bookListprivacy) {
+    public BookList(@NotNull String listName, @NotNull List<String> bookListIds, @NotNull String description,@NotNull BookListPrivacy bookListprivacy) {
         this.listName = listName;
         this.bookListIds = bookListIds;
         this.description = description;
@@ -31,16 +31,16 @@ public class BookList{
 
     public BookList() {
         this.listName = "";
-        this.bookListIds = new ArrayList<String>();
+        this.bookListIds = new ArrayList<>();
         this.description = "";
-        this.bookListprivacy = BookListprivacy.PUBLIC;
+        this.bookListprivacy = BookListPrivacy.PUBLIC;
     }
 
-    public BookList(@NotNull  String listName, @NotNull List<String> bookListIds , @NotNull BookListprivacy bookListprivacy){
-        this(listName,new ArrayList<String>(),"",bookListprivacy);
+    public BookList(@NotNull  String listName, @NotNull List<String> bookListIds , @NotNull BookListPrivacy bookListprivacy){
+        this(listName,bookListIds,"",bookListprivacy);
     }
 
-    public BookListprivacy getBookListprivacy() {
+    public BookListPrivacy getBookListprivacy() {
         return this.bookListprivacy;
     }
 

@@ -22,7 +22,8 @@ public class FirebaseInitializer {
     public FirebaseApp initFirestore() throws IOException {
         if (FirebaseApp.getApps().isEmpty()) {
             InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("private_key.json");
-    
+
+            assert serviceAccount != null;
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();

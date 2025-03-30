@@ -1,17 +1,15 @@
 package tfg.books.back.controllers;
 
-import javax.security.auth.login.AccountException;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
-
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import tfg.books.back.requests.FirebaseSignInResponse;
 import tfg.books.back.requests.RefreshTokenResponse;
 import tfg.books.back.services.FirebaseAuthClient;
 import tfg.books.back.services.UserService;
+
+import javax.security.auth.login.AccountException;
 
 @RestController
 @RequestMapping("/user")
@@ -33,7 +31,7 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<Void> createUser(@RequestBody CreateUserRequest request) throws FirebaseAuthException, AccountException {
-        userService.create(request.emailId(), request.password());
+        //userService.create(request.emailId(), request.password(), userAlias, userName, profilePictureURL);
         return ResponseEntity.ok().build();
     }
 

@@ -2,58 +2,87 @@ package tfg.books.back.model;
 
 import com.google.firebase.database.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class User {
 
-    private enum UserPrivacy {
-        PRIVATE,
-        PUBLIC
-    }
+    @NotNull
+    private final String email;
+    @NotNull
+    private final String userName;
+    @NotNull
+    private final String userAlias;
+    @NotNull
+    private final String profilePictureURL;
+    @NotNull
+    private final String description;
+    @NotNull
+    private final UserPrivacy userPrivacy;
+    @NotNull
+    private final UserFollowState userFollowState;
+    @NotNull
+    private final List<String> followedUsers;
+    @NotNull
+    private final List<String> followingUsers;
+    @NotNull
+    private final List<String> userActivities;
+    @NotNull
+    private final List<String> userLists;
+    @NotNull
+    private final List<String> followRequestList;
 
-    private enum UserFollowState {
-        FOLLOWING,
-        FOLLOWED,
-        OWN,
-        REQUESTED
+    public User() {
+        this.email = "";
+        this.userName = "";
+        this.userAlias = "";
+        this.profilePictureURL = "";
+        this.description = "";
+        this.userPrivacy = UserPrivacy.PUBLIC;
+        this.userFollowState = UserFollowState.FOLLOWED;
+        this.followedUsers = new ArrayList<>();
+        this.followingUsers = new ArrayList<>();
+        this.userActivities = new ArrayList<>();
+        this.userLists = new ArrayList<>();
+        this.followRequestList = new ArrayList<>();
     }
-
-    @NotNull
-    private String email;
-    @NotNull
-    private String userName;
-    @NotNull
-    private String userAlias;
-    @NotNull
-    private String profilePictureURL;
-    @NotNull
-    private String description;
-    @NotNull
-    private UserPrivacy userPrivacy;
-    @NotNull
-    private UserFollowState userFollowState;
-    @NotNull
-    private int followedUsersCount;
-    @NotNull
-    private int followingUsersCount;
-    @NotNull
-    private int userReviewsCount;
 
     public User(@NotNull String email, @NotNull String userName, @NotNull String userAlias,
-            @NotNull String profilePictureURL, @NotNull String description,
-            @NotNull UserPrivacy userPrivacy, @NotNull UserFollowState userFollowState, @NotNull int followedUsersCount,
-            @NotNull int followingUsersCount, @NotNull int userReviewsCount) {
+                @NotNull String profilePictureURL, @NotNull String description,
+                @NotNull UserPrivacy userPrivacy, @NotNull UserFollowState userFollowState,
+                @NotNull List<String> followedUsers, @NotNull List<String> followingUsers,
+                @NotNull List<String> userActivities, @NotNull List<String> userLists,
+                @NotNull List<String> followRequestList ) {
         this.email = email;
         this.userName = userName;
         this.userAlias = userAlias;
+        this.profilePictureURL = profilePictureURL;
         this.description = description;
         this.userPrivacy = userPrivacy;
         this.userFollowState = userFollowState;
-        this.followedUsersCount = followedUsersCount;
-        this.followingUsersCount = followingUsersCount;
-        this.userReviewsCount = userReviewsCount;
+        this.followedUsers = followedUsers;
+        this.followingUsers = followingUsers;
+        this.userActivities = userActivities;
+        this.userLists = userLists;
+        this.followRequestList = followRequestList;
     }
 
-    public User(@NotNull String email, @NotNull String userName,@NotNull String profilePictureURL, @NotNull String userAlias) {
-        this(email, userName, userAlias,profilePictureURL, "", UserPrivacy.PUBLIC, UserFollowState.OWN, 0, 0, 0);
+    public User(@NotNull String email, @NotNull String userName, @NotNull String profilePictureURL,
+                @NotNull String userAlias) {
+        this(email, userName, userAlias, profilePictureURL, "", UserPrivacy.PUBLIC, UserFollowState.OWN,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+    }
+
+    public String getProfilePictureURL() {
+        return profilePictureURL;
+    }
+
+    public List<String> getUserLists() {
+        return userLists;
+    }
+
+    public List<String> getFollowRequestList() {
+        return followRequestList;
     }
 
     public String getEmail() {
@@ -87,16 +116,28 @@ public class User {
         return this.userFollowState.toString();
     }
 
-    public int getFollowedUsersCount() {
-        return this.followedUsersCount;
+    public List<String> getFollowedUsers() {
+        return this.followedUsers;
     }
 
-    public int getFollowingUsersCount() {
-        return this.followingUsersCount;
+    public List<String> getFollowingUsers() {
+        return this.followingUsers;
     }
 
-    public int getUserReviewsCount() {
-        return this.userReviewsCount;
+    public List<String> getUserActivities() {
+        return this.userActivities;
+    }
+
+    public enum UserPrivacy {
+        PRIVATE,
+        PUBLIC
+    }
+
+    public enum UserFollowState {
+        FOLLOWING,
+        FOLLOWED,
+        OWN,
+        REQUESTED
     }
 
 }

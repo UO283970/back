@@ -7,7 +7,7 @@ import com.google.firebase.database.annotations.NotNull;
 
 public class Book {
 
-    private enum ReadingState {
+    public enum ReadingState {
         NOT_IN_LIST,
         READING,
         DROPPED,
@@ -17,23 +17,23 @@ public class Book {
     }
 
     @NotNull
-    private String tittle;
+    private final String tittle;
     @NotNull
-    private String author;
+    private final String author;
     @NotNull
-    private int pages;
+    private final int pages;
     @NotNull
-    private Double meanScore;
+    private final Double meanScore;
     @NotNull
-    private int userScore;
+    private final int userScore;
     @NotNull
-    private List<String> subjects;
+    private final List<String> subjects;
     @NotNull
-    private String details;
+    private final String details;
     @NotNull
-    private ReadingState readingState;
+    private final ReadingState readingState;
     @NotNull
-    private String imageUrl;
+    private final String imageUrl;
 
     public Book(@NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore,
             @NotNull int userScore, @NotNull List<String> subjects, @NotNull String details,
