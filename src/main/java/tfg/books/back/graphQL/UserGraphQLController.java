@@ -43,12 +43,12 @@ public class UserGraphQLController {
     }
 
     @QueryMapping
-    public String getAuthenticatedUserInfo() {
+    public User getAuthenticatedUserInfo() {
         return userService.getAuthenticatedUserInfo();
     }
 
     @QueryMapping
-    public String getAllUserInfo(@Argument("userId") String userId) {
+    public User getAllUserInfo(@Argument("userId") String userId) {
         return userService.getAllUserInfo(userId);
     }
 

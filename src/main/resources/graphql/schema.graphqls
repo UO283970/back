@@ -6,9 +6,16 @@ type Query{
     getUserSearchInfo(userQuery: String!): [User!]!
     getAuthenticatedUserInfo: User!
     getAllUserInfo(userId: String!): User!
-    #List queries
+
+    #Lists queries
     getBasicListInfo(id: String!): BookList
     getAllListInfo(id: String!): BookList
+    getUserDefaultList(userId: String!, listId: String!): BookList
+    searchLists(userQuery: String!): [BookList!]!
+
+    #User activity queries
+    getAllFollowedActivity: [Activity!]! #TODO
+    getUserReviews(userId: String!): [Activity!]! #TODO
 }
 
 type Mutation{
@@ -26,10 +33,15 @@ type Mutation{
 
     #List mutations
     createList(listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): BookList!
-    updateList(listId: String!,listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): BookList!
-    deleteList(listId: String!): String!
+    updateList(listId: String!,listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): Boolean!
+    deleteList(listId: String!): Boolean!
     addBookToList(listId: String!, bookId: String!): Boolean!
-    removeBookToList(listId: String!, bookId: String!): Boolean!
+    removeBookFromList(listId: String!, bookId: String!): Boolean!
+
+    #User activity mutations
+    addActivity(text : String!, score: Int!, bookId: String) : String! #TODO: Esto y añadir a los usuarios su lista de activivdades
+    deleteActivity(activityId: String!) : Boolean! #TODO
+    updateActivity(text : String!, score: Int!): Boolean! #TODO
 }
 
 type UserLogin{
@@ -47,6 +59,7 @@ type User{
     followedUsersCount: Int!
     followingUsersCount: Int!
     userActivitiesCount: Int!
+    userDefaultLists: [BookList]!
     userLists: [BookList]!
 }
 
@@ -58,7 +71,6 @@ enum UserPrivacy {
 enum UserFollowState {
     FOLLOWING,
     FOLLOWED,
-    OWN,
     REQUESTED
 }
 
@@ -74,4 +86,32 @@ type BookList{
     numberOfBooks: [String!]!
     bookListPrivacy: BookListPrivacy!
     description: String!
+}
+
+type Activity{
+    text: String!
+    score: Int!
+    user: User!
+    book: Book!
+}
+
+type Book{
+    tittle: String!
+    author: String!
+    pages: Int!
+    meanScore: Float!
+    userScore: Int!
+    subjects: [String!]!
+    details: String
+    readingState: ReadingState!
+    coverImageURL: String!
+}
+
+enum ReadingState {
+    NOT_IN_LIST,
+    READING,
+    DROPPED,
+    WAITING,
+    READ,
+    PLAN_TO_READ
 }

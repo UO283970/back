@@ -12,18 +12,23 @@ import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.database.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import tfg.books.back.exceptions.DuplicateAccount;
+import tfg.books.back.model.ListWithId;
 import tfg.books.back.model.LoginUser;
 import tfg.books.back.model.User;
 import tfg.books.back.requests.FirebaseSignInResponse;
 import tfg.books.back.requests.RefreshTokenResponse;
 
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 @Service
 public class UserService {
     private static final String DUPLICATE_ACCOUNT_ERROR = "EMAIL_EXISTS";
+    private static final String USERS_COLLECTION = "users";
+    
 
     private final FirebaseAuthClient firebaseAuthClient;
     private final FirebaseAuth firebaseAuth;
@@ -61,7 +66,7 @@ public class UserService {
             UserRecord userRecord = firebaseAuth.createUser(request);
             if (userRecord != null) {
                 FirebaseSignInResponse response = firebaseAuthClient.login(email, password);
-                firestore.collection("users").document(userRecord.getUid())
+                firestore.collection(USERS_COLLECTION).document(userRecord.getUid())
                         .set(new tfg.books.back.model.User(userRecord.getEmail(), userName, profilePictureURL,
                                 userAlias));
                 return new LoginUser(response.idToken(), response.refreshToken());
@@ -79,7 +84,7 @@ public class UserService {
     public Boolean update(@NotNull String userAlias, @NotNull String userName,
                           @NotNull String profilePictureURL, @NotNull String description) throws FirebaseAuthException {
         String userId = authenticatedUserIdProvider.getUserId();
-        DocumentReference document = firestore.collection("users").document(userId);
+        DocumentReference document = firestore.collection(USERS_COLLECTION).document(userId);
         document.update("userAlias", userAlias);
         document.update("userName", userName);
         document.update("profilePictureURL", profilePictureURL);
@@ -91,18 +96,18 @@ public class UserService {
     public boolean delete() throws FirebaseAuthException {
         String userId = authenticatedUserIdProvider.getUserId();
         firebaseAuth.deleteUser(userId);
-        DocumentReference docRef = firestore.collection("users").document(userId);
+        DocumentReference docRef = firestore.collection(USERS_COLLECTION).document(userId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
 
         try {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
                 for (String follow : (List<String>) (document.get("followedUsers"))) {
-                    firestore.collection("users").document(follow).update("followUsers",
+                    firestore.collection(USERS_COLLECTION).document(follow).update("followUsers",
                             FieldValue.arrayRemove(userId));
                 }
                 for (String following : (List<String>) (document.get("followingUsers"))) {
-                    firestore.collection("users").document(following).update("followingUsers",
+                    firestore.collection(USERS_COLLECTION).document(following).update("followingUsers",
                             FieldValue.arrayRemove(userId));
                 }
                 for (String activity : (List<String>) (document.get("userActivities"))) {
@@ -144,8 +149,8 @@ public class UserService {
 
     public Boolean followUser(@NotNull String friendId) {
         String userId = authenticatedUserIdProvider.getUserId();
-        DocumentReference docRef = firestore.collection("users").document(userId);
-        DocumentReference docRef2 = firestore.collection("users").document(friendId);
+        DocumentReference docRef = firestore.collection(USERS_COLLECTION).document(userId);
+        DocumentReference docRef2 = firestore.collection(USERS_COLLECTION).document(friendId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
         ApiFuture<DocumentSnapshot> future2 = docRef2.get();
 
@@ -154,12 +159,12 @@ public class UserService {
             DocumentSnapshot document2 = future2.get();
             if (document.exists() && document2.exists()) {
                 if (User.UserPrivacy.valueOf(document2.getString("userPrivacy")).equals(User.UserPrivacy.PRIVATE)) {
-                    firestore.collection("users").document(friendId).update("followRequestList",
+                    firestore.collection(USERS_COLLECTION).document(friendId).update("followRequestList",
                             FieldValue.arrayUnion(userId));
                 } else {
-                    firestore.collection("users").document(userId).update("followingUsers",
+                    firestore.collection(USERS_COLLECTION).document(userId).update("followingUsers",
                             FieldValue.arrayUnion(friendId));
-                    firestore.collection("users").document(friendId).update("followedUsers",
+                    firestore.collection(USERS_COLLECTION).document(friendId).update("followedUsers",
                             FieldValue.arrayUnion(userId));
                 }
             } else {
@@ -174,8 +179,8 @@ public class UserService {
 
     public Boolean cancelFollow(@NotNull String friendId) {
         String userId = authenticatedUserIdProvider.getUserId();
-        DocumentReference docRef = firestore.collection("users").document(userId);
-        DocumentReference docRef2 = firestore.collection("users").document(friendId);
+        DocumentReference docRef = firestore.collection(USERS_COLLECTION).document(userId);
+        DocumentReference docRef2 = firestore.collection(USERS_COLLECTION).document(friendId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
         ApiFuture<DocumentSnapshot> future2 = docRef2.get();
 
@@ -183,11 +188,11 @@ public class UserService {
             DocumentSnapshot document = future.get();
             DocumentSnapshot document2 = future2.get();
             if (document.exists() && document2.exists()) {
-                firestore.collection("users").document(friendId).update("followRequestList",
+                firestore.collection(USERS_COLLECTION).document(friendId).update("followRequestList",
                         FieldValue.arrayRemove(userId));
-                firestore.collection("users").document(userId).update("followingUsers",
+                firestore.collection(USERS_COLLECTION).document(userId).update("followingUsers",
                         FieldValue.arrayRemove(friendId));
-                firestore.collection("users").document(friendId).update("followedUsers",
+                firestore.collection(USERS_COLLECTION).document(friendId).update("followedUsers",
                         FieldValue.arrayRemove(userId));
             } else {
                 return false;
@@ -200,8 +205,8 @@ public class UserService {
 
     public Boolean acceptRequest(@NotNull String friendId) {
         String userId = authenticatedUserIdProvider.getUserId();
-        DocumentReference docRef = firestore.collection("users").document(userId);
-        DocumentReference docRef2 = firestore.collection("users").document(friendId);
+        DocumentReference docRef = firestore.collection(USERS_COLLECTION).document(userId);
+        DocumentReference docRef2 = firestore.collection(USERS_COLLECTION).document(friendId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
         ApiFuture<DocumentSnapshot> future2 = docRef2.get();
 
@@ -209,11 +214,11 @@ public class UserService {
             DocumentSnapshot document = future.get();
             DocumentSnapshot document2 = future2.get();
             if (document.exists() && document2.exists()) {
-                firestore.collection("users").document(friendId).update("followRequestList",
+                firestore.collection(USERS_COLLECTION).document(friendId).update("followRequestList",
                         FieldValue.arrayRemove(userId));
-                firestore.collection("users").document(userId).update("followingUsers",
+                firestore.collection(USERS_COLLECTION).document(userId).update("followingUsers",
                         FieldValue.arrayUnion(friendId));
-                firestore.collection("users").document(friendId).update("followedUsers",
+                firestore.collection(USERS_COLLECTION).document(friendId).update("followedUsers",
                         FieldValue.arrayUnion(userId));
             } else {
                 return false;
@@ -226,8 +231,8 @@ public class UserService {
 
     public Boolean cancelRequest(@NotNull String friendId) {
         String userId = authenticatedUserIdProvider.getUserId();
-        DocumentReference docRef = firestore.collection("users").document(userId);
-        DocumentReference docRef2 = firestore.collection("users").document(friendId);
+        DocumentReference docRef = firestore.collection(USERS_COLLECTION).document(userId);
+        DocumentReference docRef2 = firestore.collection(USERS_COLLECTION).document(friendId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
         ApiFuture<DocumentSnapshot> future2 = docRef2.get();
 
@@ -235,7 +240,7 @@ public class UserService {
             DocumentSnapshot document = future.get();
             DocumentSnapshot document2 = future2.get();
             if (document.exists() && document2.exists()) {
-                firestore.collection("users").document(friendId).update("followRequestList",
+                firestore.collection(USERS_COLLECTION).document(friendId).update("followRequestList",
                         FieldValue.arrayRemove(userId));
             } else {
                 return false;
@@ -248,8 +253,8 @@ public class UserService {
 
     public Boolean deleteFromFollower(@NotNull String friendId) {
         String userId = authenticatedUserIdProvider.getUserId();
-        DocumentReference docRef = firestore.collection("users").document(userId);
-        DocumentReference docRef2 = firestore.collection("users").document(friendId);
+        DocumentReference docRef = firestore.collection(USERS_COLLECTION).document(userId);
+        DocumentReference docRef2 = firestore.collection(USERS_COLLECTION).document(friendId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
         ApiFuture<DocumentSnapshot> future2 = docRef2.get();
 
@@ -257,10 +262,10 @@ public class UserService {
             DocumentSnapshot document = future.get();
             DocumentSnapshot document2 = future2.get();
             if (document.exists() && document2.exists()) {
-                firestore.collection("users").document(userId).update("followedUsers",
-                        FieldValue.arrayUnion(friendId));
-                firestore.collection("users").document(friendId).update("followingUsers",
-                        FieldValue.arrayUnion(userId));
+                firestore.collection(USERS_COLLECTION).document(userId).update("followedUsers",
+                        FieldValue.arrayRemove(friendId));
+                firestore.collection(USERS_COLLECTION).document(friendId).update("followingUsers",
+                        FieldValue.arrayRemove(userId));
             } else {
                 return false;
             }
@@ -270,7 +275,81 @@ public class UserService {
         return true;
     }
 
-    public  List<User> getUserSearchInfo(@NotNull String userQuery) {
-        return (List<User>) firestore.collection("users").whereEqualTo("userName",userQuery);
+    public List<User> getUserSearchInfo(@NotNull String userQuery) {
+        return (List<User>) firestore.collection(USERS_COLLECTION)
+                .whereGreaterThanOrEqualTo("userName", userQuery)
+                .whereLessThan("userName", userQuery + '\uf8ff');
     }
+
+    public User getAuthenticatedUserInfo() {
+        String userId = authenticatedUserIdProvider.getUserId();
+        DocumentReference docRef = firestore.collection(USERS_COLLECTION).document(userId);
+        ApiFuture<DocumentSnapshot> future = docRef.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+            if (document.exists()) {
+                return document.toObject(User.class);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new User();
+    }
+
+    public User getAllUserInfo(@NotNull String userId) {
+        DocumentReference docRef = firestore.collection(USERS_COLLECTION).document(userId);
+        ApiFuture<DocumentSnapshot> future = docRef.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+            if (document.exists()) {
+                return document.toObject(User.class);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new User();
+    }
+
+    public Boolean checkUserFollows(@NotNull String userId) {
+        DocumentReference docRef = firestore.collection(USERS_COLLECTION).document(userId);
+        String authenticatedUserId = authenticatedUserIdProvider.getUserId();
+        ApiFuture<DocumentSnapshot> future = docRef.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+            if (document.exists()) {
+                return ((List<String>) Objects.requireNonNull(document.get("followersUsers"))).contains(authenticatedUserId);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return false;
+    }
+
+    public List<ListWithId> getDefaultUserList(@NotNull String userId) {
+        if (userId.isEmpty()) {
+            userId = authenticatedUserIdProvider.getUserId();
+        }
+        DocumentReference docRef = firestore.collection(USERS_COLLECTION).document(userId);
+        ApiFuture<DocumentSnapshot> future = docRef.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+            if (document.exists()) {
+                return ((List<ListWithId>) Objects.requireNonNull(document.get("userDefaultLists")));
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new ArrayList<>();
+
+
+    }
+
 }

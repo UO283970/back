@@ -1,20 +1,11 @@
 package tfg.books.back.model;
 
+import com.google.firebase.database.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.firebase.database.annotations.NotNull;
-
 public class Book {
-
-    public enum ReadingState {
-        NOT_IN_LIST,
-        READING,
-        DROPPED,
-        WAITING,
-        READ,
-        PLAN_TO_READ
-    }
 
     @NotNull
     private final String tittle;
@@ -34,7 +25,6 @@ public class Book {
     private final ReadingState readingState;
     @NotNull
     private final String imageUrl;
-
     public Book(@NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore,
             @NotNull int userScore, @NotNull List<String> subjects, @NotNull String details,
             @NotNull ReadingState readingState, @NotNull String imageUrl) {
@@ -51,6 +41,18 @@ public class Book {
 
     public Book(@NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore, @NotNull ReadingState readingState, @NotNull String imageUrl){
         this(tittle,author,pages,meanScore, 0, new ArrayList<String>(), "",readingState,imageUrl);
+    }
+
+    public Book() {
+        this.tittle = "";
+        this.author = "";
+        this.pages = 0;
+        this.meanScore = 0.0;
+        this.userScore = 0;
+        this.subjects = new ArrayList<>();
+        this.details = "";
+        this.readingState = ReadingState.NOT_IN_LIST;
+        this.imageUrl = "";
     }
 
     public String getTittle() {
@@ -87,6 +89,15 @@ public class Book {
 
     public String getImageUrl() {
         return this.imageUrl;
+    }
+
+    public enum ReadingState {
+        NOT_IN_LIST,
+        READING,
+        DROPPED,
+        WAITING,
+        READ,
+        PLAN_TO_READ
     }
     
 }
