@@ -1,6 +1,7 @@
-package tfg.books.back.model;
+package tfg.books.back.model.userModels;
 
 import com.google.firebase.database.annotations.NotNull;
+import tfg.books.back.model.BookList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +20,6 @@ public class User {
     private final String description;
     @NotNull
     private final UserPrivacy userPrivacy;
-    @NotNull
-    private final UserFollowState userFollowState;
     @NotNull
     private final List<String> followersUsers;
     @NotNull
@@ -41,7 +40,6 @@ public class User {
         this.profilePictureURL = "";
         this.description = "";
         this.userPrivacy = UserPrivacy.PUBLIC;
-        this.userFollowState = UserFollowState.FOLLOWED;
         this.followersUsers = new ArrayList<>();
         this.followingUsers = new ArrayList<>();
         this.userActivities = new ArrayList<>();
@@ -52,17 +50,16 @@ public class User {
 
     public User(@NotNull String email, @NotNull String userName, @NotNull String userAlias,
                 @NotNull String profilePictureURL, @NotNull String description,
-                @NotNull UserPrivacy userPrivacy, @NotNull UserFollowState userFollowState,
-                @NotNull List<String> followedUsers, @NotNull List<String> followingUsers,
-                @NotNull List<String> userActivities, @NotNull List<BookList> userDefaultLists,@NotNull List<String> userLists,
-                @NotNull List<String> followRequestList ) {
+                @NotNull UserPrivacy userPrivacy, @NotNull List<String> followedUsers,
+                @NotNull List<String> followingUsers, @NotNull List<String> userActivities,
+                @NotNull List<BookList> userDefaultLists, @NotNull List<String> userLists,
+                @NotNull List<String> followRequestList) {
         this.email = email;
         this.userName = userName;
         this.userAlias = userAlias;
         this.profilePictureURL = profilePictureURL;
         this.description = description;
         this.userPrivacy = userPrivacy;
-        this.userFollowState = userFollowState;
         this.followersUsers = followedUsers;
         this.followingUsers = followingUsers;
         this.userActivities = userActivities;
@@ -73,8 +70,9 @@ public class User {
 
     public User(@NotNull String email, @NotNull String userName, @NotNull String profilePictureURL,
                 @NotNull String userAlias) {
-        this(email, userName, userAlias, profilePictureURL, "", UserPrivacy.PUBLIC, UserFollowState.FOLLOWED,
-                new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(email, userName, userAlias, profilePictureURL, "", UserPrivacy.PUBLIC,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),
+                new ArrayList<>());
     }
 
     public List<BookList> getUserDefaultLists() {
@@ -116,14 +114,6 @@ public class User {
         return this.userPrivacy.toString();
     }
 
-    public String getUserFollowState() {
-        if (this.userFollowState == null) {
-            return "";
-        }
-
-        return this.userFollowState.toString();
-    }
-
     public List<String> getFollowersUsers() {
         return this.followersUsers;
     }
@@ -143,8 +133,9 @@ public class User {
 
     public enum UserFollowState {
         FOLLOWING,
-        FOLLOWED,
-        REQUESTED
+        NOT_FOLLOW,
+        REQUESTED,
+        OWN
     }
 
 }

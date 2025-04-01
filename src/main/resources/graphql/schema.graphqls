@@ -6,11 +6,15 @@ type Query{
     getUserSearchInfo(userQuery: String!): [User!]!
     getAuthenticatedUserInfo: User!
     getAllUserInfo(userId: String!): User!
+    getFollowersOfUser(userId: String!): [User!]!
+    getFollowingListUser(userId: String!): [User!]!
+    getUsersReviews(userId: String!): [Activity!]!
 
     #Lists queries
     getBasicListInfo(id: String!): BookList
     getAllListInfo(id: String!): BookList
     getUserDefaultList(userId: String!, listId: String!): BookList
+    getUserDefaultLists(userId: String!): BookList
     searchLists(userQuery: String!): [BookList!]!
 
     #User activity queries
@@ -25,7 +29,7 @@ type Mutation{
     deleteUser: Boolean!
 
     #Follow mutations
-    followUser(friendId: String!): Boolean!
+    followUser(friendId: String!): UserFollowState!
     cancelFollow(friendId: String!): Boolean!
     acceptRequest(friendId: String!): Boolean!
     cancelRequest(friendId: String!): Boolean!
@@ -35,11 +39,13 @@ type Mutation{
     createList(listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): BookList!
     updateList(listId: String!,listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): Boolean!
     deleteList(listId: String!): Boolean!
+    addBookToDefaultList(listId: String!, bookId: String!): ReadingState!
+    removeBookToDefaultList(listId: String!, bookId: String!): Boolean!
     addBookToList(listId: String!, bookId: String!): Boolean!
     removeBookFromList(listId: String!, bookId: String!): Boolean!
 
     #User activity mutations
-    addActivity(text : String!, score: Int!, bookId: String) : String! #TODO: Esto y añadir a los usuarios su lista de activivdades
+    addActivity(text : String!, score: Int!, bookId: String) : String! #TODO
     deleteActivity(activityId: String!) : Boolean! #TODO
     updateActivity(text : String!, score: Int!): Boolean! #TODO
 }
@@ -50,6 +56,7 @@ type UserLogin{
 }
 
 type User{
+    userId: String!
     userName: String!
     userAlias: String!
     userPhotoURL: String!
@@ -70,8 +77,9 @@ enum UserPrivacy {
 
 enum UserFollowState {
     FOLLOWING,
-    FOLLOWED,
-    REQUESTED
+    NOT_FOLLOW,
+    REQUESTED,
+    OWN
 }
 
 enum BookListPrivacy{
@@ -93,6 +101,11 @@ type Activity{
     score: Int!
     user: User!
     book: Book!
+}
+
+enum userActivityType{
+    REVIEW,
+    RATING
 }
 
 type Book{

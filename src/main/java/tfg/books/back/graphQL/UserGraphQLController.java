@@ -7,7 +7,12 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import tfg.books.back.model.LoginUser;
-import tfg.books.back.model.User;
+import tfg.books.back.model.UserActivity;
+import tfg.books.back.model.userModels.User.UserFollowState;
+import tfg.books.back.model.userModels.UserForApp;
+import tfg.books.back.model.userModels.UserForProfile;
+import tfg.books.back.model.userModels.UserForSearch;
+import tfg.books.back.services.AppFirebaseConstants;
 import tfg.books.back.services.UserService;
 
 import java.util.List;
@@ -38,18 +43,34 @@ public class UserGraphQLController {
     }
 
     @QueryMapping
-    public List<User> getUserSearchInfo(@Argument("userQuery") String userQuery) {
+    public List<UserForSearch> getUserSearchInfo(@Argument("userQuery") String userQuery) {
         return userService.getUserSearchInfo(userQuery);
     }
 
     @QueryMapping
-    public User getAuthenticatedUserInfo() {
+    public UserForApp getAuthenticatedUserInfo() {
         return userService.getAuthenticatedUserInfo();
     }
 
     @QueryMapping
-    public User getAllUserInfo(@Argument("userId") String userId) {
+    public UserForApp getAllUserInfo(@Argument("userId") String userId) {
         return userService.getAllUserInfo(userId);
+    }
+
+    @QueryMapping
+    public List<UserForProfile> getFollowersOfUser(@Argument("userId") String userId) {
+        return userService.getUsersListOFUser(userId, AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION);
+    }
+
+
+    @QueryMapping
+    public List<UserForProfile> getFollowingListUser(@Argument("userId") String userId) {
+        return userService.getUsersListOFUser(userId, AppFirebaseConstants.USERS_FOLLOWING_COLLECTION);
+    }
+
+    @QueryMapping
+    public List<UserActivity> getUsersReviews(@Argument("userId") String userId) {
+        return userService.getUsersReviews(userId);
     }
 
     @MutationMapping
@@ -75,7 +96,7 @@ public class UserGraphQLController {
     }
 
     @MutationMapping
-    public Boolean followUser(@Argument("friendId") String friendId)
+    public UserFollowState followUser(@Argument("friendId") String friendId)
             throws FirebaseAuthException {
         return userService.followUser(friendId);
     }
@@ -97,6 +118,7 @@ public class UserGraphQLController {
             throws FirebaseAuthException {
         return userService.cancelRequest(friendId);
     }
+
     @MutationMapping
     public Boolean deleteFromFollower(@Argument("friendId") String friendId)
             throws FirebaseAuthException {

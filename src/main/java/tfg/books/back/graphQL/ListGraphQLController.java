@@ -4,9 +4,13 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
+import tfg.books.back.model.BasicListInfo;
+import tfg.books.back.model.Book.ReadingState;
 import tfg.books.back.model.BookList.BookListPrivacy;
 import tfg.books.back.model.ListWithId;
 import tfg.books.back.services.ListService;
+
+import java.util.List;
 
 @Controller
 public class ListGraphQLController {
@@ -18,7 +22,7 @@ public class ListGraphQLController {
     }
 
     @QueryMapping
-    public ListWithId getBasicListInfo(@Argument("id") String id) {
+    public BasicListInfo getBasicListInfo(@Argument("id") String id) {
         return listService.getBasicListInfo(id);
     }
 
@@ -28,8 +32,18 @@ public class ListGraphQLController {
     }
 
     @QueryMapping
-    public ListWithId getUserDefaultList(@Argument("id") String userId,@Argument("id") String listId) {
+    public ListWithId getUserDefaultList(@Argument("userId") String userId,@Argument("listId") String listId) {
         return listService.getUserDefaultList(userId, listId);
+    }
+
+    @QueryMapping
+    public List<ListWithId> getUserDefaultLists(@Argument("userId") String userId) {
+        return listService.getDefaultUserLists(userId);
+    }
+
+    @QueryMapping
+    public List<ListWithId> searchLists(@Argument("userQuery") String userQuery) {
+        return listService.searchLists(userQuery);
     }
 
 
@@ -46,8 +60,18 @@ public class ListGraphQLController {
     }
 
     @MutationMapping
-    public Boolean updateList(@Argument("listId") String listId) {
+    public Boolean deleteList(@Argument("listId") String listId) {
         return listService.deleteList(listId);
+    }
+
+    @MutationMapping
+    public ReadingState addBookToDefaultList(@Argument("listId") String listId, @Argument("bookId") String bookId) {
+        return listService.addBookToDefaultList(listId, bookId);
+    }
+
+    @MutationMapping
+    public Boolean removeBookToDefaultList(@Argument("listId") String listId, @Argument("bookId") String bookId) {
+        return listService.removeBookToDefaultList(listId,bookId);
     }
 
     @MutationMapping
