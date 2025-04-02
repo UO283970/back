@@ -1,23 +1,21 @@
 package tfg.books.back.services;
 
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.FieldValue;
-import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.*;
 import com.google.firebase.database.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import tfg.books.back.exceptions.DataNotRetrievedException;
-import tfg.books.back.model.BasicListInfo;
+import tfg.books.back.firebase.AppFirebaseConstants;
+import tfg.books.back.firebase.AuthenticatedUserIdProvider;
+import tfg.books.back.model.Book;
 import tfg.books.back.model.Book.ReadingState;
-import tfg.books.back.model.BookList;
-import tfg.books.back.model.ListWithId;
+import tfg.books.back.model.list.BasicListInfo;
+import tfg.books.back.model.list.BookList;
+import tfg.books.back.model.list.ListForFirebase;
+import tfg.books.back.model.list.ListWithId;
 
 import java.nio.file.AccessDeniedException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -35,12 +33,11 @@ public class ListService {
     public BasicListInfo getBasicListInfo(@NotNull String id) {
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(id);
         ApiFuture<DocumentSnapshot> future = docRef.get();
-        BookList bookList = null;
 
         try {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
-                bookList =
+                BookList bookList =
                         firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(id).get().get().toObject(BookList.class);
                 if (checkUserOwnership(id)
                         || Objects.requireNonNull(bookList).getBookListPrivacy().equals(BookList.BookListPrivacy.PUBLIC)
@@ -50,7 +47,8 @@ public class ListService {
                             .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().toProto().getSerializedSize();
 
                     assert bookList != null;
-                    return new BasicListInfo(id, bookList.getListName(),bookCount, bookList.getBookListPrivacy());
+                    return new BasicListInfo(id, bookList.getListName(), bookCount, bookList.getBookListPrivacy(),
+                            bookList.getUserId());
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -63,35 +61,35 @@ public class ListService {
     public ListWithId getAllListInfo(@NotNull String id) {
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(id);
         ApiFuture<DocumentSnapshot> future = docRef.get();
-        BookList bookList = null;
 
         try {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
-                bookList = document.toObject(BookList.class);
+                BookList bookList = document.toObject(BookList.class);
                 if (checkUserOwnership(id) || Objects.requireNonNull(bookList).getBookListPrivacy().equals(BookList.BookListPrivacy.PUBLIC)
                         || checkListVisibilityConnectedUser(Objects.requireNonNull(bookList).getBookListPrivacy(),
                         bookList.getUserId())) {
 
-                    bookList = document.toObject(BookList.class);
-                } else {
-                    bookList = new BookList();
-                }
+                    List<Book> listOfBooks = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(id)
+                            .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).get().get().toObjects(Book.class);
 
+                    assert bookList != null;
+                    return new ListWithId(id, bookList.getListName(), listOfBooks, bookList.getDescription(),
+                            bookList.getBookListPrivacy(), bookList.getUserId());
+                }
+                return null;
             }
         } catch (InterruptedException | ExecutionException e) {
-            throw new DataNotRetrievedException("The data could not be retrieved properly"); //TODO: Hay que hacer que las listas devuelvan todas lo mismo, listas con id ahora mismo esta un poco liado
+            throw new DataNotRetrievedException("The data could not be retrieved properly");
         }
 
-        assert bookList != null;
-        return new ListWithId(id, bookList.getListName(), bookList, bookList.getDescription(),
-                bookList.getBookListPrivacy());
+        return null;
     }
 
-    public ListWithId getUserDefaultList(@NotNull String userId, @NotNull String listId) {
-        List<ListWithId> userDefaultLists = getDefaultUserLists(userId);
-        for (ListWithId l : userDefaultLists) {
-            if (l.id().equals(listId)) {
+    public BookList getUserDefaultList(@NotNull String userId, @NotNull String listId) {
+        List<BookList> userDefaultLists = getDefaultUserLists(userId);
+        for (BookList l : userDefaultLists) {
+            if (l.getListId().equals(listId)) {
                 return l;
             }
         }
@@ -109,22 +107,22 @@ public class ListService {
     }
 
 
-    public ListWithId createList(@NotNull String listName, @NotNull String description,
-                                 @NotNull BookList.BookListPrivacy bookListprivacy) {
+    public BookList createList(@NotNull String listName, @NotNull String description,
+                               @NotNull BookList.BookListPrivacy bookListprivacy) {
         String generatedID = UUID.randomUUID().toString();
         String userId = authenticatedUserIdProvider.getUserId();
-        BookList generatedList = new BookList(userId, listName, description, bookListprivacy);
+        ListForFirebase generatedList = new ListForFirebase(listName, description, bookListprivacy, userId);
         firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(generatedID).set(generatedList);
 
-        return new ListWithId(generatedID, listName, new ArrayList<>(), description, bookListprivacy);
+
+        return new BookList(generatedID, userId, listName, description, bookListprivacy, new ArrayList<>());
     }
 
     public Boolean updateList(@NotNull String listId, @NotNull String listName, @NotNull String description,
                               @NotNull BookList.BookListPrivacy bookListprivacy) {
         if (checkUserOwnership(listId)) {
             String userId = authenticatedUserIdProvider.getUserId();
-            BookList generatedList = new BookList(userId, listName, description,
-                    bookListprivacy);
+            ListForFirebase generatedList = new ListForFirebase(listName, description, bookListprivacy, userId);
             firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(listId).set(generatedList);
             return true;
         }
@@ -140,8 +138,8 @@ public class ListService {
     }
 
     public ReadingState addBookToDefaultList(@NotNull String listId, @NotNull String bookId) {
-        for (ListWithId list : getDefaultUserLists("")) {
-            removeBookToDefaultList(list.id(), bookId);
+        for (BookList list : getDefaultUserLists("")) {
+            removeBookToDefaultList(list.getListId(), bookId);
         }
 
         String userId = authenticatedUserIdProvider.getUserId();
@@ -155,7 +153,7 @@ public class ListService {
                 DocumentReference bookList =
                         firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
                                 collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).document(listId);
-                bookList.collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).add(bookId);
+                bookList.collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).document(bookId).set(new HashMap<String, String>());
                 return ReadingState.valueOf(bookList.get().get().getString("listName"));
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -277,18 +275,26 @@ public class ListService {
         return false;
     }
 
-    public List<ListWithId> getDefaultUserLists(@NotNull String userId) {
+    public List<BookList> getDefaultUserLists(@NotNull String userId) {
         if (userId.isEmpty()) {
             userId = authenticatedUserIdProvider.getUserId();
         }
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
+        List<BookList> bookLists = new ArrayList<>();
 
         try {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
-                return firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
-                        collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).get().get().toObjects(ListWithId.class);
+                QuerySnapshot listOfDocuments =
+                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
+                        collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).get().get();
+                for (QueryDocumentSnapshot listDocument : listOfDocuments) {
+                    BookList actualBookList = listDocument.toObject(BookList.class);
+                    actualBookList.setListId(document.getId());
+                    bookLists.add(actualBookList);
+                }
+                return bookLists;
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);

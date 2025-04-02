@@ -4,10 +4,11 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
-import tfg.books.back.model.BasicListInfo;
 import tfg.books.back.model.Book.ReadingState;
-import tfg.books.back.model.BookList.BookListPrivacy;
-import tfg.books.back.model.ListWithId;
+import tfg.books.back.model.list.BasicListInfo;
+import tfg.books.back.model.list.BookList;
+import tfg.books.back.model.list.BookList.BookListPrivacy;
+import tfg.books.back.model.list.ListWithId;
 import tfg.books.back.services.ListService;
 
 import java.util.List;
@@ -32,12 +33,12 @@ public class ListGraphQLController {
     }
 
     @QueryMapping
-    public ListWithId getUserDefaultList(@Argument("userId") String userId,@Argument("listId") String listId) {
+    public BookList getUserDefaultList(@Argument("userId") String userId,@Argument("listId") String listId) {
         return listService.getUserDefaultList(userId, listId);
     }
 
     @QueryMapping
-    public List<ListWithId> getUserDefaultLists(@Argument("userId") String userId) {
+    public List<BookList> getUserDefaultLists(@Argument("userId") String userId) {
         return listService.getDefaultUserLists(userId);
     }
 
@@ -48,8 +49,8 @@ public class ListGraphQLController {
 
 
     @MutationMapping
-    public ListWithId createList(@Argument("listName") String listName,
-                                 @Argument("description") String description, @Argument("bookListPrivacy") BookListPrivacy bookListprivacy) {
+    public BookList createList(@Argument("listName") String listName,
+                                      @Argument("description") String description, @Argument("bookListPrivacy") BookListPrivacy bookListprivacy) {
         return listService.createList(listName,description,bookListprivacy);
     }
 

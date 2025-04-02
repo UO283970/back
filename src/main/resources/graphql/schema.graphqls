@@ -18,14 +18,13 @@ type Query{
     searchLists(userQuery: String!): [BookList!]!
 
     #User activity queries
-    getAllFollowedActivity: [Activity!]! #TODO
-    getUserReviews(userId: String!): [Activity!]! #TODO
+    getAllFollowedActivity: [Activity!]!
 }
 
 type Mutation{
     #User mutations
     createUser(email: String!, password: String!, userAlias: String!, userName: String!, profilePictureURL: String!): UserLogin!
-    updateUser(userAlias: String!, userName: String!, profilePictureURL: String!, description: String!): UserLogin!
+    updateUser(userAlias: String!, userName: String!, profilePictureURL: String!, description: String!): Boolean!
     deleteUser: Boolean!
 
     #Follow mutations
@@ -45,9 +44,9 @@ type Mutation{
     removeBookFromList(listId: String!, bookId: String!): Boolean!
 
     #User activity mutations
-    addActivity(text : String!, score: Int!, bookId: String) : String! #TODO
+    addActivity(text : String!, score: Int!, bookId: String) : Activity!
     deleteActivity(activityId: String!) : Boolean! #TODO
-    updateActivity(text : String!, score: Int!): Boolean! #TODO
+    updateActivity(activityId: String!, text : String!, score: Int!): Boolean! #TODO
 }
 
 type UserLogin{
@@ -59,7 +58,7 @@ type User{
     userId: String!
     userName: String!
     userAlias: String!
-    userPhotoURL: String!
+    profilePictureURL: String!
     description: String!
     userPrivacy: UserPrivacy!
     userFollowState: UserFollowState!
@@ -97,6 +96,7 @@ type BookList{
 }
 
 type Activity{
+    id: String!
     text: String!
     score: Int!
     user: User!

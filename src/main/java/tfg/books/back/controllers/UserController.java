@@ -4,9 +4,9 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import tfg.books.back.firebase.FirebaseAuthClient;
 import tfg.books.back.requests.FirebaseSignInResponse;
 import tfg.books.back.requests.RefreshTokenResponse;
-import tfg.books.back.services.FirebaseAuthClient;
 import tfg.books.back.services.UserService;
 
 import javax.security.auth.login.AccountException;

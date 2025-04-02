@@ -1,7 +1,7 @@
 package tfg.books.back.model.userModels;
 
 import com.google.firebase.database.annotations.NotNull;
-import tfg.books.back.model.BookList;
+import tfg.books.back.model.list.BookList;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,8 +1,13 @@
-package tfg.books.back.model;
+package tfg.books.back.model.list;
 
 import com.google.firebase.database.annotations.NotNull;
+import tfg.books.back.model.Book;
 
-public class BookList{
+import java.util.ArrayList;
+import java.util.List;
+
+public class BookList {
+
     @NotNull
     private final String userId;
     @NotNull
@@ -11,22 +16,36 @@ public class BookList{
     private final String description;
     @NotNull
     private final BookListPrivacy bookListPrivacy;
-    public BookList(@NotNull String userId,@NotNull String listName, @NotNull String description,@NotNull BookListPrivacy bookListprivacy) {
+    @NotNull
+    private final List<Book> books;
+    @NotNull
+    private String listId;
+
+    public BookList(@NotNull String listId,@NotNull String userId, @NotNull String listName, @NotNull String description,
+                    @NotNull BookListPrivacy bookListprivacy, @NotNull List<Book> books) {
+        this.listId = listId;
         this.userId = userId;
         this.listName = listName;
         this.description = description;
         this.bookListPrivacy = bookListprivacy;
+        this.books = books;
     }
 
     public BookList() {
+        this.listId = "";
         this.userId = "";
         this.listName = "";
         this.description = "";
         this.bookListPrivacy = BookListPrivacy.PUBLIC;
+        this.books = new ArrayList<>();
     }
 
-    public BookList(@NotNull String userId,@NotNull  String listName , @NotNull BookListPrivacy bookListprivacy){
-        this(userId,listName,"",bookListprivacy);
+    public String getListId() {
+        return listId;
+    }
+
+    public void setListId(@NotNull String listId){
+        this.listId = listId;
     }
 
     public String getUserId() {

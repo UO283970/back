@@ -1,22 +1,25 @@
 package tfg.books.back.model;
 
 import com.google.firebase.database.annotations.NotNull;
-import tfg.books.back.model.userModels.User;
+import tfg.books.back.model.userModels.UserForSearch;
 
 public class UserActivity {
+
     @NotNull
     private final String text;
     @NotNull
     private final int userScore;
     @NotNull
-    private final User user;
+    private final UserForSearch user;
     @NotNull
     private final Book book;
     @NotNull
     private final UserActivityType userActivityType;
+    @NotNull
+    String id;
 
 
-    public UserActivity(String text, int userScore, User user, Book book, UserActivityType userActivityType) {
+    public UserActivity(String text, int userScore, UserForSearch user, Book book, UserActivityType userActivityType) {
         this.text = text;
         this.userScore = userScore;
         this.user = user;
@@ -25,11 +28,16 @@ public class UserActivity {
     }
 
     public UserActivity() {
+        this.id = "";
         this.text = "";
         this.userScore = -1;
-        this.user = new User();
+        this.user = null;
         this.book = new Book();
         this.userActivityType = UserActivityType.REVIEW;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getText() {
@@ -40,7 +48,7 @@ public class UserActivity {
         return userScore;
     }
 
-    public User getUser() {
+    public UserForSearch getUser() {
         return user;
     }
 

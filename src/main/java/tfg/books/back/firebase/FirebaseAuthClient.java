@@ -1,17 +1,16 @@
-package tfg.books.back.services;
-
-import java.security.InvalidParameterException;
+package tfg.books.back.firebase;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
-
 import tfg.books.back.requests.FirebaseSignInRequest;
 import tfg.books.back.requests.FirebaseSignInResponse;
 import tfg.books.back.requests.RefreshTokenRequest;
 import tfg.books.back.requests.RefreshTokenResponse;
+
+import java.security.InvalidParameterException;
 
 @Component
 public class FirebaseAuthClient {
