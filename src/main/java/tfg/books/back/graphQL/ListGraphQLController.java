@@ -71,7 +71,7 @@ public class ListGraphQLController {
     }
 
     @MutationMapping
-    public Boolean removeBookToDefaultList(@Argument("listId") String listId, @Argument("bookId") String bookId) {
+    public Boolean removeBookFromDefaultList(@Argument("listId") String listId, @Argument("bookId") String bookId) {
         return listService.removeBookToDefaultList(listId,bookId);
     }
 

@@ -1,4 +1,4 @@
-package tfg.books.back.model;
+package tfg.books.back.model.userActivity;
 
 import com.google.firebase.database.annotations.NotNull;
 

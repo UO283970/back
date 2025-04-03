@@ -8,17 +8,20 @@ type Query{
     getAllUserInfo(userId: String!): User!
     getFollowersOfUser(userId: String!): [User!]!
     getFollowingListUser(userId: String!): [User!]!
-    getUsersReviews(userId: String!): [Activity!]!
+    getUsersReviews(userId: String!): [UserActivity!]!
 
     #Lists queries
     getBasicListInfo(id: String!): BookList
     getAllListInfo(id: String!): BookList
     getUserDefaultList(userId: String!, listId: String!): BookList
-    getUserDefaultLists(userId: String!): BookList
+    getUserDefaultLists(userId: String!): [BookList!]!
     searchLists(userQuery: String!): [BookList!]!
 
     #User activity queries
-    getAllFollowedActivity: [Activity!]!
+    getAllFollowedActivity: [UserActivity!]!
+
+    #Book queries
+    searchBooks(userQuery: String!): [Book!]!
 }
 
 type Mutation{
@@ -39,14 +42,14 @@ type Mutation{
     updateList(listId: String!,listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): Boolean!
     deleteList(listId: String!): Boolean!
     addBookToDefaultList(listId: String!, bookId: String!): ReadingState!
-    removeBookToDefaultList(listId: String!, bookId: String!): Boolean!
+    removeBookFromDefaultList(listId: String!, bookId: String!): Boolean!
     addBookToList(listId: String!, bookId: String!): Boolean!
     removeBookFromList(listId: String!, bookId: String!): Boolean!
 
     #User activity mutations
-    addActivity(text : String!, score: Int!, bookId: String) : Activity!
-    deleteActivity(activityId: String!) : Boolean! #TODO
-    updateActivity(activityId: String!, text : String!, score: Int!): Boolean! #TODO
+    addActivity(activityText : String!, score: Int!, bookId: String, userActivityType: UserActivityType): UserActivity!
+    deleteActivity(activityId: String!): Boolean!
+    updateActivity(activityId: String!, activityText : String!, score: Int!): Boolean!
 }
 
 type UserLogin{
@@ -88,34 +91,23 @@ enum BookListPrivacy{
 }
 
 type BookList{
-    id: String!
+    listId: String!
     listName: String!
     numberOfBooks: [String!]!
     bookListPrivacy: BookListPrivacy!
     description: String!
 }
 
-type Activity{
-    id: String!
-    text: String!
-    score: Int!
-    user: User!
-    book: Book!
-}
-
-enum userActivityType{
-    REVIEW,
-    RATING
-}
-
 type Book{
-    tittle: String!
+    bookId: String!
+    title: String!
     author: String!
-    pages: Int!
+    publishYear: String!
+    pages: String!
     meanScore: Float!
     userScore: Int!
     subjects: [String!]!
-    details: String
+    description: String
     readingState: ReadingState!
     coverImageURL: String!
 }
@@ -127,4 +119,17 @@ enum ReadingState {
     WAITING,
     READ,
     PLAN_TO_READ
+}
+
+type UserActivity{
+    activityId: String!
+    text: String!
+    score: Int!
+    user: User
+    book: Book
+}
+
+enum UserActivityType{
+    REVIEW,
+    RATING
 }

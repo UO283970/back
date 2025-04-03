@@ -7,7 +7,7 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import tfg.books.back.firebase.AppFirebaseConstants;
-import tfg.books.back.model.UserActivity;
+import tfg.books.back.model.userActivity.UserActivity;
 import tfg.books.back.model.userModels.LoginUser;
 import tfg.books.back.model.userModels.User.UserFollowState;
 import tfg.books.back.model.userModels.UserForApp;

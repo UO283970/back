@@ -1,6 +1,7 @@
-package tfg.books.back.model;
+package tfg.books.back.model.userActivity;
 
 import com.google.firebase.database.annotations.NotNull;
+import tfg.books.back.model.Book;
 import tfg.books.back.model.userModels.UserForSearch;
 
 public class UserActivity {
