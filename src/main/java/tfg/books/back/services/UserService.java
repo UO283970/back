@@ -15,6 +15,7 @@ import tfg.books.back.exceptions.DuplicateAccount;
 import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.firebase.AuthenticatedUserIdProvider;
 import tfg.books.back.firebase.FirebaseAuthClient;
+import tfg.books.back.model.list.BasicListInfo;
 import tfg.books.back.model.list.BookList;
 import tfg.books.back.model.list.DefaultListForFirebase;
 import tfg.books.back.model.userActivity.UserActivity;
@@ -54,6 +55,25 @@ public class UserService {
         FirebaseSignInResponse response = firebaseAuthClient.login(email, password);
         if (response.idToken() != null && !response.idToken().isEmpty()) {
             return new LoginUser(response.idToken(), response.refreshToken());
+        } else {
+            throw new InvalidParameterException("User not found");
+        }
+
+    }
+
+    public String checkConnectedUser() {
+        String firebaseToken = authenticatedUserIdProvider.getUserId();
+        if(firebaseToken == null){
+
+        }
+
+        return true;
+    }
+
+    public String refreshToken(@NotNull String oldRefreshToken) {
+        RefreshTokenResponse response = firebaseAuthClient.exchangeRefreshToken(oldRefreshToken);
+        if (response.id_token() != null && !response.id_token().isEmpty()) {
+            return response.id_token();
         } else {
             throw new InvalidParameterException("User not found");
         }
@@ -134,6 +154,8 @@ public class UserService {
                     listService.deleteList(list.getId());
                 }
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).delete();
+                firebaseAuth.revokeRefreshTokens(userId);
+                firebaseAuth.deleteUser(userId);
                 return true;
             } else {
                 return false;
@@ -141,16 +163,6 @@ public class UserService {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public String refreshToken(@NotNull String oldRefreshToken) {
-        RefreshTokenResponse response = firebaseAuthClient.exchangeRefreshToken(oldRefreshToken);
-        if (response.id_token() != null && !response.id_token().isEmpty()) {
-            return response.id_token();
-        } else {
-            throw new InvalidParameterException("User not found");
-        }
-
     }
 
     public String logout() throws FirebaseAuthException {
@@ -318,7 +330,7 @@ public class UserService {
 
         try {
             DocumentSnapshot document = future.get();
-            if(document.exists()){
+            if (document.exists()) {
                 return document.toObject(UserForSearch.class);
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -351,8 +363,8 @@ public class UserService {
                 List<BookList> defaultUserList =
                         firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
                                 collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).get().get().toObjects(BookList.class);
-                List<BookList> userLists = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo(
-                        "userId", userId).get().get().toObjects(BookList.class);
+                List<BasicListInfo> userLists = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo(
+                        "userId", userId).get().get().toObjects(BasicListInfo.class);
                 UserFollowState userFollowState = UserFollowState.OWN;
 
 
@@ -377,6 +389,7 @@ public class UserService {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
                 BasicInfoUser basicInfoUser = document.toObject(BasicInfoUser.class);
+                assert basicInfoUser != null;
 
                 int numberOfFollowers =
                         Long.valueOf(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
@@ -384,17 +397,13 @@ public class UserService {
                 int numberOfFollowing =
                         Long.valueOf(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
                                 .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).count().get().get().getCount()).intValue();
-                int numberOfReviews =  Long.valueOf(firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo(
+                int numberOfReviews =
+                        Long.valueOf(firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo(
                         "userId", userId).whereEqualTo("userActivityType", UserActivity.UserActivityType.REVIEW).count().get().get().getCount()).intValue();
-                List<BookList> defaultUserList =
-                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
-                                .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).get().get().toObjects(BookList.class);
-                List<BookList> userLists = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo(
-                        "userId", userId).get().get().toObjects(BookList.class);
 
                 String connectedUserId = authenticatedUserIdProvider.getUserId();
                 UserFollowState userFollowState = UserFollowState.NOT_FOLLOW;
-                if(userId.equals(connectedUserId)){
+                if (userId.equals(connectedUserId)) {
                     userFollowState = UserFollowState.OWN;
                 } else if (firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(connectedUserId)
                         .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).document(userId).get().get().exists()) {
@@ -404,7 +413,16 @@ public class UserService {
                     userFollowState = UserFollowState.REQUESTED;
                 }
 
-                assert basicInfoUser != null;
+                List<BookList> defaultUserList = new ArrayList<>();
+                List<BasicListInfo> userLists = new ArrayList<>();
+
+                if (!basicInfoUser.userPrivacy().equals(UserPrivacy.PRIVATE) && userFollowState.equals(UserFollowState.FOLLOWING)) {
+                    defaultUserList =
+                            firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                                    .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).get().get().toObjects(BookList.class);
+                    userLists = listService.getBasicListInfoList(userId);
+                }
+
                 return new UserForApp(userId, basicInfoUser.userName(), basicInfoUser.userAlias(),
                         basicInfoUser.profilePictureURL(), basicInfoUser.description(), basicInfoUser.userPrivacy(),
                         numberOfFollowers, numberOfFollowing, numberOfReviews, defaultUserList, userLists,

@@ -23,8 +23,8 @@ public class ListGraphQLController {
     }
 
     @QueryMapping
-    public BasicListInfo getBasicListInfo(@Argument("id") String id) {
-        return listService.getBasicListInfo(id);
+    public List<BasicListInfo> getBasicListInfo(@Argument("userId") String userId) {
+        return listService.getBasicListInfoList(userId);
     }
 
     @QueryMapping

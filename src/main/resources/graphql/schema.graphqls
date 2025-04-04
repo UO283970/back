@@ -1,6 +1,7 @@
 type Query{
     #User queries
     login(email: String!, password: String!): UserLogin!
+    checkConnectedUser: UserLogin
     logout: String!
     refreshToken(oldRefreshToken: String!): String!
     getUserSearchInfo(userQuery: String!): [User!]!
@@ -11,10 +12,10 @@ type Query{
     getUsersReviews(userId: String!): [UserActivity!]!
 
     #Lists queries
-    getBasicListInfo(id: String!): BookList
-    getAllListInfo(id: String!): BookList
+    getBasicListInfoList(listId: String!): [BookList!]!
+    getAllListInfo(listId: String!): BookList
     getUserDefaultList(userId: String!, listId: String!): BookList
-    getUserDefaultLists(userId: String!): [BookList!]!
+    getUserDefaultListsList(userId: String!): [BookList!]!
     searchLists(userQuery: String!): [BookList!]!
 
     #User activity queries
@@ -38,7 +39,7 @@ type Mutation{
     deleteFromFollower(friendId: String!): Boolean!
 
     #List mutations
-    createList(listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): BookList!
+    createList(listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): String!
     updateList(listId: String!,listName: String!, description: String!, bookListPrivacy: BookListPrivacy!): Boolean!
     deleteList(listId: String!): Boolean!
     addBookToDefaultList(listId: String!, bookId: String!): ReadingState!
@@ -93,9 +94,11 @@ enum BookListPrivacy{
 type BookList{
     listId: String!
     listName: String!
-    numberOfBooks: [String!]!
+    numberOfBooks: Int!
+    listOfBooks: [Book!]!
     bookListPrivacy: BookListPrivacy!
     description: String!
+    listUserId: String!
 }
 
 type Book{
@@ -125,8 +128,9 @@ type UserActivity{
     activityId: String!
     text: String!
     score: Int!
-    user: User
-    book: Book
+    user: User!
+    book: Book!
+    activityType: UserActivityType!
 }
 
 enum UserActivityType{

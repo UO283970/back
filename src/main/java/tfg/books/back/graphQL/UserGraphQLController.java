@@ -32,6 +32,11 @@ public class UserGraphQLController {
     }
 
     @QueryMapping
+    public String checkConnectedUser() {
+        return userService.checkConnectedUser();
+    }
+
+    @QueryMapping
     @PreAuthorize("isAuthenticated()")
     public String logout() throws FirebaseAuthException {
         return userService.logout();
