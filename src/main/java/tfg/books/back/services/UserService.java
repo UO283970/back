@@ -126,13 +126,32 @@ public class UserService {
     }
 
     public Boolean update(@NotNull String userAlias, @NotNull String userName, @NotNull String profilePictureURL,
-                          @NotNull String description) throws FirebaseAuthException {
+                          @NotNull String description, @NotNull UserPrivacy privacyLevel) {
         String userId = authenticatedUserIdProvider.getUserId();
         DocumentReference document = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
+
+        try {
+            if (!document.get().get().get("userAlias").toString().equals(userAlias)) {
+                QuerySnapshot userAliasRepeat = null;
+
+                userAliasRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
+                        "userAlias", userAlias).get().get();
+
+
+                if (userAliasRepeat != null && !userAliasRepeat.isEmpty()) {
+                    return false;
+                }
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            return false;
+        }
+
         document.update("userAlias", userAlias);
         document.update("userName", userName);
         document.update("profilePictureURL", profilePictureURL);
         document.update("description", description);
+        document.update("userPrivacy", privacyLevel.toString());
+
 
         return true;
     }
@@ -365,9 +384,18 @@ public class UserService {
                         Long.valueOf(firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo(
                                 "userId", userId).whereEqualTo("userActivityType",
                                 UserActivity.UserActivityType.REVIEW).count().get().get().getCount()).intValue();
-                List<BookList> defaultUserList =
+
+
+                List<BookList> defaultUserList = new ArrayList<>();
+                QuerySnapshot listOfDocuments =
                         firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
-                                collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).get().get().toObjects(BookList.class);
+                                collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).get().get();
+
+                for (QueryDocumentSnapshot listDocument : listOfDocuments) {
+                    BookList actualBookList = listDocument.toObject(BookList.class);
+                    actualBookList.setListId(listDocument.getId());
+                    defaultUserList.add(actualBookList);
+                }
 
                 int count = 0;
                 for (BookList list : defaultUserList) {
@@ -378,11 +406,11 @@ public class UserService {
                 }
 
                 QuerySnapshot userLists = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo(
-                        "userId", userId).get().get();
+                        "listUserId", userId).get().get();
 
                 List<BookList> bookList = new ArrayList<>();
 
-                for(QueryDocumentSnapshot query : userLists){
+                for (QueryDocumentSnapshot query : userLists) {
                     BookList list = query.toObject(BookList.class);
                     list.setListId(query.getId());
                     bookList.add(list);

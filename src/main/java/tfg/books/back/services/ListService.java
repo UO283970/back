@@ -42,7 +42,7 @@ public class ListService {
             if (document.exists()) {
                 if (userId.equals(authenticatedUserIdProvider.getUserId())) {
                     QuerySnapshot userList = firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
-                            .whereEqualTo("userId", userId).get().get();
+                            .whereEqualTo("listUserId", userId).get().get();
 
                     for(QueryDocumentSnapshot query : userList){
                         BookList list = query.toObject(BookList.class);
@@ -53,7 +53,7 @@ public class ListService {
                     return bookListList;
                 }
                 QuerySnapshot userList = firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
-                        .whereEqualTo("userId", userId).whereNotEqualTo("bookListPrivacy",
+                        .whereEqualTo("listUserId", userId).whereNotEqualTo("bookListPrivacy",
                                 BookList.BookListPrivacy.PRIVATE)
                         .get().get();
 
@@ -135,7 +135,7 @@ public class ListService {
 
         try {
             if(!firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo("listName",listName)
-                    .whereEqualTo("userId",userId).get().get().isEmpty() || listName.isBlank()){
+                    .whereEqualTo("listUserId",userId).get().get().isEmpty() || listName.isBlank()){
                 return "";
             }
         } catch (InterruptedException | ExecutionException e) {

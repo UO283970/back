@@ -81,9 +81,9 @@ public class UserGraphQLController {
     @MutationMapping
     public Boolean updateUser(@Argument("userAlias") String userAlias, @Argument("userName") String userName,
                               @Argument("profilePictureURL") String profilePictureURL,
-                              @Argument("description") String description)
+                              @Argument("description") String description, @Argument("privacyLevel")User.UserPrivacy privacyLevel)
             throws FirebaseAuthException {
-        return userService.update(userAlias, userName, profilePictureURL, description);
+        return userService.update(userAlias, userName, profilePictureURL, description, privacyLevel);
     }
 
     @MutationMapping
