@@ -377,10 +377,18 @@ public class UserService {
                     count++;
                 }
 
-                List<BookList> userLists = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo(
-                        "userId", userId).get().get().toObjects(BookList.class);
+                QuerySnapshot userLists = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo(
+                        "userId", userId).get().get();
 
-                for (BookList list : userLists) {
+                List<BookList> bookList = new ArrayList<>();
+
+                for(QueryDocumentSnapshot query : userLists){
+                    BookList list = query.toObject(BookList.class);
+                    list.setListId(query.getId());
+                    bookList.add(list);
+                }
+
+                for (BookList list : bookList) {
                     list.setNumberOfBooks(Long.valueOf(firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(list.getListId())
                             .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().get().get().getCount()).intValue());
                 }
@@ -391,7 +399,7 @@ public class UserService {
                 assert basicInfoUser != null;
                 return new UserForApp(userId, basicInfoUser.userName(), basicInfoUser.userAlias(),
                         basicInfoUser.profilePictureURL(), basicInfoUser.description(), basicInfoUser.userPrivacy(),
-                        numberOfFollowers, numberOfFollowing, numberOfReviews, defaultUserList, userLists,
+                        numberOfFollowers, numberOfFollowing, numberOfReviews, defaultUserList, bookList,
                         userFollowState);
             }
         } catch (InterruptedException | ExecutionException e) {

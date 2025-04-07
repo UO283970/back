@@ -41,13 +41,27 @@ public class ListService {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
                 if (userId.equals(authenticatedUserIdProvider.getUserId())) {
-                    return firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
-                            .whereEqualTo("userId", userId).get().get().toObjects(BookList.class);
+                    QuerySnapshot userList = firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
+                            .whereEqualTo("userId", userId).get().get();
+
+                    for(QueryDocumentSnapshot query : userList){
+                        BookList list = query.toObject(BookList.class);
+                        list.setListId(query.getId());
+                        bookListList.add(list);
+                    }
+
+                    return bookListList;
                 }
-                bookListList = firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
+                QuerySnapshot userList = firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
                         .whereEqualTo("userId", userId).whereNotEqualTo("bookListPrivacy",
                                 BookList.BookListPrivacy.PRIVATE)
-                        .get().get().toObjects(BookList.class);
+                        .get().get();
+
+                for(QueryDocumentSnapshot query : userList){
+                    BookList list = query.toObject(BookList.class);
+                    list.setListId(query.getId());
+                    bookListList.add(list);
+                }
 
                 if (firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
                         .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(userId).get().get().exists()) {
@@ -75,14 +89,14 @@ public class ListService {
                 BookList bookList = document.toObject(BookList.class);
                 if (checkUserOwnership(id) || Objects.requireNonNull(bookList).getBookListPrivacy().equals(BookList.BookListPrivacy.PUBLIC)
                         || checkListVisibilityConnectedUser(Objects.requireNonNull(bookList).getBookListPrivacy(),
-                        bookList.getUserId())) {
+                        bookList.getListUserId())) {
 
                     List<Book> listOfBooks = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(id)
                             .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).get().get().toObjects(Book.class);
 
                     assert bookList != null;
                     return new ListWithId(id, bookList.getListName(), listOfBooks, bookList.getDescription(),
-                            bookList.getBookListPrivacy(), bookList.getUserId());
+                            bookList.getBookListPrivacy(), bookList.getListUserId());
                 }
                 return null;
             }
@@ -258,7 +272,7 @@ public class ListService {
             if (document.exists()) {
                 BookList bookList = document.toObject(BookList.class);
                 assert bookList != null;
-                if (bookList.getUserId().equals(userId)) {
+                if (bookList.getListUserId().equals(userId)) {
                     return true;
                 } else {
                     throw new AccessDeniedException("You don't have access to this resource");
@@ -308,7 +322,7 @@ public class ListService {
                                 collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).get().get();
                 for (QueryDocumentSnapshot listDocument : listOfDocuments) {
                     BookList actualBookList = listDocument.toObject(BookList.class);
-                    actualBookList.setListId(document.getId());
+                    actualBookList.setListId(listDocument.getId());
                     bookLists.add(actualBookList);
                 }
                 return bookLists;

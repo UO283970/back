@@ -9,7 +9,7 @@ import java.util.List;
 public class BookList {
 
     @NotNull
-    private final String userId;
+    private final String listUserId;
     @NotNull
     private final String listName;
     @NotNull
@@ -19,30 +19,30 @@ public class BookList {
     @NotNull
     private final BookListPrivacy bookListPrivacy;
     @NotNull
-    private final List<Book> books;
+    private final List<Book> listOfBooks;
     @NotNull
     private String listId;
     @NotNull
     private int numberOfBooks;
 
-    public BookList(@NotNull String listId,@NotNull String userId, @NotNull String listName, @NotNull String description,
+    public BookList(@NotNull String listId, @NotNull String listUserId, @NotNull String listName, @NotNull String description,
                     @NotNull BookListPrivacy bookListprivacy, @NotNull List<Book> books) {
         this.listId = listId;
-        this.userId = userId;
+        this.listUserId = listUserId;
         this.listName = listName;
         this.description = description;
         this.bookListPrivacy = bookListprivacy;
-        this.books = books;
+        this.listOfBooks = books;
         this.listImage = "";
     }
 
     public BookList() {
         this.listId = "";
-        this.userId = "";
+        this.listUserId = "";
         this.listName = "";
         this.description = "";
         this.bookListPrivacy = BookListPrivacy.PUBLIC;
-        this.books = new ArrayList<>();
+        this.listOfBooks = new ArrayList<>();
         this.listImage = "";
     }
 
@@ -54,8 +54,8 @@ public class BookList {
         this.listId = listId;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getListUserId() {
+        return listUserId;
     }
 
     public BookListPrivacy getBookListPrivacy() {
