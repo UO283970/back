@@ -13,5 +13,5 @@ public class AppFirebaseConstants{
     public static final String LIST_COLLECTION = "lists";
     public static final String INSIDE_BOOKS_LIST_COLLECTION = "books";
     public static final String ACTIVITIES_COLLECTION = "activities";
-    public static final List<String> DEFAULT_LISTS = List.of("READING","DROPPED","WAITING","READ","PLAN_TO_READ");
+    public static final List<String> DEFAULT_LISTS = List.of("READING","READ","PLAN_TO_READ","DROPPED","WAITING");
 }

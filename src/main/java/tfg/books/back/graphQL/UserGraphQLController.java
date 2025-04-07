@@ -8,11 +8,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.model.userActivity.UserActivity;
-import tfg.books.back.model.userModels.LoginUser;
+import tfg.books.back.model.userModels.*;
 import tfg.books.back.model.userModels.User.UserFollowState;
-import tfg.books.back.model.userModels.UserForApp;
-import tfg.books.back.model.userModels.UserForProfile;
-import tfg.books.back.model.userModels.UserForSearch;
 import tfg.books.back.services.UserService;
 
 import java.util.List;
@@ -29,11 +26,6 @@ public class UserGraphQLController {
     @QueryMapping
     public LoginUser login(@Argument("email") String email, @Argument("password") String password) {
         return userService.login(email, password);
-    }
-
-    @QueryMapping
-    public String checkConnectedUser() {
-        return userService.checkConnectedUser();
     }
 
     @QueryMapping
@@ -79,19 +71,19 @@ public class UserGraphQLController {
     }
 
     @MutationMapping
+    public RegisterUser createUser(@Argument("email") String email, @Argument("password") String password,
+                                   @Argument("repeatedPassword") String repeatedPassword, @Argument("userAlias") String userAlias,
+                                   @Argument("userName") String userName, @Argument("profilePictureURL") String profilePictureURL)
+            throws FirebaseAuthException {
+        return userService.create(email, password, repeatedPassword, userAlias, userName, profilePictureURL);
+    }
+
+    @MutationMapping
     public Boolean updateUser(@Argument("userAlias") String userAlias, @Argument("userName") String userName,
                               @Argument("profilePictureURL") String profilePictureURL,
                               @Argument("description") String description)
             throws FirebaseAuthException {
         return userService.update(userAlias, userName, profilePictureURL, description);
-    }
-
-    @MutationMapping
-    public LoginUser createUser(@Argument("email") String email, @Argument("password") String password,
-                                @Argument("userAlias") String userAlias, @Argument("userName") String userName,
-                                @Argument("profilePictureURL") String profilePictureURL)
-            throws FirebaseAuthException {
-        return userService.create(email, password, userAlias, userName, profilePictureURL);
     }
 
     @MutationMapping

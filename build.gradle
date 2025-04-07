@@ -24,7 +24,6 @@ dependencies {
 	implementation("org.springframework.security:spring-security-core:6.4.4")
 	implementation("org.springframework.security:spring-security-web:6.4.4")
 	implementation("org.springframework.boot:spring-boot-starter-security:3.4.4")
-	implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.graphql:spring-graphql-test'

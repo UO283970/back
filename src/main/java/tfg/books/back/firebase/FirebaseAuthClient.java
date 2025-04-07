@@ -5,6 +5,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import tfg.books.back.GrpahQLErrors.AppErrorConstants;
+import tfg.books.back.GrpahQLErrors.GraphQLCustomError;
 import tfg.books.back.requests.FirebaseSignInRequest;
 import tfg.books.back.requests.FirebaseSignInResponse;
 import tfg.books.back.requests.RefreshTokenRequest;
@@ -44,7 +46,7 @@ public class FirebaseAuthClient {
                     .body(FirebaseSignInResponse.class);
         } catch (HttpClientErrorException exception) {
             if (exception.getResponseBodyAsString().contains(INVALID_CREDENTIALS_ERROR)) {
-                throw new InvalidParameterException("Invalid login credentials provided");
+                throw new GraphQLCustomError("Invalid login credentials provided", AppErrorConstants.INVALID_LOGIN_CREDENTIALS);
             }
             throw exception;
         }

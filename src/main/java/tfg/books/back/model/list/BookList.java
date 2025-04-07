@@ -15,11 +15,15 @@ public class BookList {
     @NotNull
     private final String description;
     @NotNull
+    private final String listImage;
+    @NotNull
     private final BookListPrivacy bookListPrivacy;
     @NotNull
     private final List<Book> books;
     @NotNull
     private String listId;
+    @NotNull
+    private int numberOfBooks;
 
     public BookList(@NotNull String listId,@NotNull String userId, @NotNull String listName, @NotNull String description,
                     @NotNull BookListPrivacy bookListprivacy, @NotNull List<Book> books) {
@@ -29,6 +33,7 @@ public class BookList {
         this.description = description;
         this.bookListPrivacy = bookListprivacy;
         this.books = books;
+        this.listImage = "";
     }
 
     public BookList() {
@@ -38,6 +43,7 @@ public class BookList {
         this.description = "";
         this.bookListPrivacy = BookListPrivacy.PUBLIC;
         this.books = new ArrayList<>();
+        this.listImage = "";
     }
 
     public String getListId() {
@@ -62,6 +68,10 @@ public class BookList {
 
     public String getDescription() {
         return this.description;
+    }
+
+    public void setNumberOfBooks(int numberOfBooks) {
+        this.numberOfBooks = numberOfBooks;
     }
 
     public enum BookListPrivacy {

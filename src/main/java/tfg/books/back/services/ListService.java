@@ -9,7 +9,6 @@ import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.firebase.AuthenticatedUserIdProvider;
 import tfg.books.back.model.Book;
 import tfg.books.back.model.Book.ReadingState;
-import tfg.books.back.model.list.BasicListInfo;
 import tfg.books.back.model.list.BookList;
 import tfg.books.back.model.list.ListForFirebase;
 import tfg.books.back.model.list.ListWithId;
@@ -30,32 +29,32 @@ public class ListService {
         this.authenticatedUserIdProvider = authenticatedUserIdProvider;
     }
 
-    public List<BasicListInfo> getBasicListInfoList(@NotNull String userId) {
+    public List<BookList> getBasicListInfoList(@NotNull String userId) {
         if (userId.isEmpty()) {
             userId = authenticatedUserIdProvider.getUserId();
         }
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
-        List<BasicListInfo> bookListList = new ArrayList<>();
+        List<BookList> bookListList = new ArrayList<>();
 
         try {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
                 if (userId.equals(authenticatedUserIdProvider.getUserId())) {
                     return firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
-                            .whereEqualTo("userId", userId).get().get().toObjects(BasicListInfo.class);
+                            .whereEqualTo("userId", userId).get().get().toObjects(BookList.class);
                 }
                 bookListList = firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
                         .whereEqualTo("userId", userId).whereNotEqualTo("bookListPrivacy",
                                 BookList.BookListPrivacy.PRIVATE)
-                        .get().get().toObjects(BasicListInfo.class);
+                        .get().get().toObjects(BookList.class);
 
                 if (firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
                         .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(userId).get().get().exists()) {
                     return bookListList;
                 }
 
-                return bookListList.stream().filter(b -> b.bookListPrivacy().equals(BookList.BookListPrivacy.PUBLIC)).toList();
+                return bookListList.stream().filter(b -> b.getBookListPrivacy().equals(BookList.BookListPrivacy.PUBLIC)).toList();
 
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -115,15 +114,24 @@ public class ListService {
     }
 
 
-    public BookList createList(@NotNull String listName, @NotNull String description,
+    public String createList(@NotNull String listName, @NotNull String description,
                                @NotNull BookList.BookListPrivacy bookListprivacy) {
         String generatedID = UUID.randomUUID().toString();
         String userId = authenticatedUserIdProvider.getUserId();
+
+        try {
+            if(!firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo("listName",listName)
+                    .whereEqualTo("userId",userId).get().get().isEmpty() || listName.isBlank()){
+                return "";
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
         ListForFirebase generatedList = new ListForFirebase(listName, description, bookListprivacy, userId);
         firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(generatedID).set(generatedList);
 
-
-        return new BookList(generatedID, userId, listName, description, bookListprivacy, new ArrayList<>());
+        return generatedID;
     }
 
     public Boolean updateList(@NotNull String listId, @NotNull String listName, @NotNull String description,
@@ -271,7 +279,8 @@ public class ListService {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
                 DocumentReference docRef2 =
-                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(authenticatedUserId);
+                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                                .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(authenticatedUserId);
                 ApiFuture<DocumentSnapshot> future2 = docRef2.get();
                 DocumentSnapshot document2 = future2.get();
                 return document2.exists();

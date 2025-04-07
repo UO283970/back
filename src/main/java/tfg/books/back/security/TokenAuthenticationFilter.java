@@ -1,9 +1,14 @@
 package tfg.books.back.security;
 
-import java.io.IOException;
-import java.util.Optional;
-
-import com.google.firebase.database.annotations.NotNull;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -12,18 +17,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
-
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import reactor.util.annotation.NonNull;
+
+import java.io.IOException;
+import java.util.Optional;
 
 @Component
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
@@ -71,7 +68,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private void setAuthErrorDetails(HttpServletResponse response) throws JsonProcessingException, IOException {
+    private void setAuthErrorDetails(HttpServletResponse response) throws IOException {
         HttpStatus unauthorized = HttpStatus.UNAUTHORIZED;
         response.setStatus(unauthorized.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
