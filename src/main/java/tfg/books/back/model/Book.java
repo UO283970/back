@@ -8,7 +8,9 @@ import java.util.List;
 public class Book {
 
     @NotNull
-    private final String tittle;
+    private final String bookId;
+    @NotNull
+    private final String title;
     @NotNull
     private final String author;
     @NotNull
@@ -24,11 +26,12 @@ public class Book {
     @NotNull
     private final ReadingState readingState;
     @NotNull
-    private final String imageUrl;
-    public Book(@NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore,
-            @NotNull int userScore, @NotNull List<String> subjects, @NotNull String details,
-            @NotNull ReadingState readingState, @NotNull String imageUrl) {
-        this.tittle = tittle;
+    private final String coverImageURL;
+    public Book(String bookId, @NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore,
+                @NotNull int userScore, @NotNull List<String> subjects, @NotNull String details,
+                @NotNull ReadingState readingState, @NotNull String imageUrl) {
+        this.bookId = bookId;
+        this.title = tittle;
         this.author = author;
         this.pages = pages;
         this.meanScore = meanScore;
@@ -36,15 +39,16 @@ public class Book {
         this.subjects = subjects;
         this.details = details;
         this.readingState = readingState;
-        this.imageUrl = imageUrl;
+        this.coverImageURL = imageUrl;
     }
 
-    public Book(@NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore, @NotNull ReadingState readingState, @NotNull String imageUrl){
-        this(tittle,author,pages,meanScore, 0, new ArrayList<String>(), "",readingState,imageUrl);
+    public Book(@NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore, @NotNull ReadingState readingState, @NotNull String imageUrl, String bookId){
+        this(bookId, tittle,author,pages,meanScore, 0, new ArrayList<String>(), "",readingState,imageUrl);
     }
 
     public Book() {
-        this.tittle = "";
+        this.bookId = "";
+        this.title = "";
         this.author = "";
         this.pages = 0;
         this.meanScore = 0.0;
@@ -52,11 +56,11 @@ public class Book {
         this.subjects = new ArrayList<>();
         this.details = "";
         this.readingState = ReadingState.NOT_IN_LIST;
-        this.imageUrl = "";
+        this.coverImageURL = "";
     }
 
-    public String getTittle() {
-        return this.tittle;
+    public String getTitle() {
+        return this.title;
     }
 
     public String getAuthor() {
@@ -87,8 +91,8 @@ public class Book {
         return this.readingState;
     }
 
-    public String getImageUrl() {
-        return this.imageUrl;
+    public String getCoverImageURL() {
+        return this.coverImageURL;
     }
 
     public enum ReadingState {

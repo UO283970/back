@@ -25,7 +25,7 @@ public class ActivitiesGraphQLController {
     }
 
     @MutationMapping
-    public UserActivity addActivity(@Argument("activityText") String activityText, @Argument("score") int score, @Argument(
+    public Boolean addActivity(@Argument("activityText") String activityText, @Argument("score") int score, @Argument(
             "bookId") String bookId, @Argument("userActivityType")UserActivityType userActivityType) {
         return userActivityService.addActivity(activityText, score, bookId, userActivityType);
     }

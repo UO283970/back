@@ -75,7 +75,7 @@ public class UserGraphQLController {
                                    @Argument("repeatedPassword") String repeatedPassword, @Argument("userAlias") String userAlias,
                                    @Argument("userName") String userName, @Argument("profilePictureURL") String profilePictureURL)
             throws FirebaseAuthException {
-        return userService.create(email, password, repeatedPassword, userAlias, userName, profilePictureURL);
+        return userService.create(email, password, repeatedPassword, userAlias.toLowerCase(), userName, profilePictureURL);
     }
 
     @MutationMapping

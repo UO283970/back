@@ -48,7 +48,7 @@ type Mutation{
     removeBookFromList(listId: String!, bookId: String!): Boolean!
 
     #User activity mutations
-    addActivity(activityText : String!, score: Int!, bookId: String, userActivityType: UserActivityType): UserActivity!
+    addActivity(activityText : String!, score: Int!, bookId: String, userActivityType: UserActivityType): Boolean!
     deleteActivity(activityId: String!): Boolean!
     updateActivity(activityId: String!, activityText : String!, score: Int!): Boolean!
 }
@@ -153,11 +153,12 @@ enum ReadingState {
 
 type UserActivity{
     activityId: String!
-    text: String!
+    activityText: String!
     score: Int!
     user: User!
     book: Book!
-    activityType: UserActivityType!
+    userActivityType: UserActivityType!
+    localDateTime: String!
 }
 
 enum UserActivityType{

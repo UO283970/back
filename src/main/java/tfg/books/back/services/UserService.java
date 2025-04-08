@@ -12,6 +12,7 @@ import tfg.books.back.checks.UserChecks;
 import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.firebase.AuthenticatedUserIdProvider;
 import tfg.books.back.firebase.FirebaseAuthClient;
+import tfg.books.back.model.Book;
 import tfg.books.back.model.list.BookList;
 import tfg.books.back.model.list.DefaultListForFirebase;
 import tfg.books.back.model.userActivity.UserActivity;
@@ -22,6 +23,8 @@ import tfg.books.back.requests.FirebaseSignInResponse;
 import tfg.books.back.requests.RefreshTokenResponse;
 
 import java.security.InvalidParameterException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +52,7 @@ public class UserService {
 
     public LoginUser login(@NotNull String email, @NotNull String password) {
         List<UserErrorLogin> userErrorLogin = UserChecks.loginCheck(email, password);
-        if (userErrorLogin.isEmpty()) {
+        if (!userErrorLogin.isEmpty()) {
             return new LoginUser("", "", List.of());
         }
 
@@ -340,9 +343,11 @@ public class UserService {
         }
 
         for (QueryDocumentSnapshot document : userDocument) {
-            UserForSearch userForSearch = document.toObject(UserForSearch.class);
-            searchUsers.add(new UserForSearch(document.getId(), userForSearch.userName(), userForSearch.userAlias(),
-                    userForSearch.profilePictureURL()));
+            if(!document.getId().equals(authenticatedUserIdProvider.getUserId())){
+                UserForSearch userForSearch = document.toObject(UserForSearch.class);
+                searchUsers.add(new UserForSearch(document.getId(), userForSearch.userName(), userForSearch.userAlias(),
+                        userForSearch.profilePictureURL()));
+            }
         }
 
         return searchUsers;
@@ -355,7 +360,9 @@ public class UserService {
         try {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
-                return document.toObject(UserForSearch.class);
+                UserForSearch userObtained = document.toObject(UserForSearch.class);
+                assert userObtained != null;
+                return new UserForSearch(userId,userObtained.userName(),userObtained.userAlias(),userObtained.profilePictureURL());
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
@@ -474,9 +481,23 @@ public class UserService {
                 List<BookList> userLists = new ArrayList<>();
 
                 if (!basicInfoUser.userPrivacy().equals(UserPrivacy.PRIVATE) && userFollowState.equals(UserFollowState.FOLLOWING)) {
-                    defaultUserList =
-                            firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
-                                    .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).get().get().toObjects(BookList.class);
+                    QuerySnapshot listOfDocuments =
+                            firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
+                                    collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).get().get();
+
+                    for (QueryDocumentSnapshot listDocument : listOfDocuments) {
+                        BookList actualBookList = listDocument.toObject(BookList.class);
+                        actualBookList.setListId(listDocument.getId());
+                        defaultUserList.add(actualBookList);
+                    }
+
+                    int count = 0;
+                    for (BookList list : defaultUserList) {
+                        list.setNumberOfBooks(Long.valueOf(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
+                                collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).document(String.valueOf(count))
+                                .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().get().get().getCount()).intValue());
+                        count++;
+                    }
                     userLists = listService.getBasicListInfoList(userId);
                 }
 
@@ -493,6 +514,10 @@ public class UserService {
     }
 
     public List<UserForProfile> getUsersListOFUser(@NotNull String userId, @NotNull String collectionName) {
+        if(userId.isBlank()){
+            userId = authenticatedUserIdProvider.getUserId();
+        }
+
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
         List<UserForProfile> followersList = new ArrayList<>();
@@ -504,8 +529,13 @@ public class UserService {
                 Iterable<DocumentReference> userFollowingList =
                         firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).collection(collectionName).listDocuments();
                 for (DocumentReference followerUserId : userFollowingList) {
-                    followersList.add(firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
-                            .document(followerUserId.getId()).get().get().toObject(UserForProfile.class));
+                    User actualUser = firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
+                            .document(followerUserId.getId()).get().get().toObject(User.class);
+
+                    assert actualUser != null;
+                    followersList.add(new UserForProfile(followerUserId.getId(), actualUser.getUserName(),
+                            actualUser.getUserAlias(), actualUser.getProfilePictureURL(),
+                            actualUser.getUserFollowState()));
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -516,22 +546,42 @@ public class UserService {
     }
 
     public List<UserActivity> getUsersReviews(@NotNull String userId) {
+        if(userId.isBlank()){
+            userId = authenticatedUserIdProvider.getUserId();
+        }
+
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
-        List<UserActivity> followersList = new ArrayList<>();
+        List<UserActivity> userFollowActivitiesForApp = new ArrayList<>();
 
 
         try {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
-                return firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo("userId",
-                        userId).whereEqualTo("userActivityType", UserActivity.UserActivityType.REVIEW).get().get().toObjects(UserActivity.class);
+                QuerySnapshot userFollowActivities = firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo("userId",
+                        userId).whereEqualTo("userActivityType", UserActivity.UserActivityType.REVIEW).get().get();
+
+                for (QueryDocumentSnapshot userActivity : userFollowActivities) {
+                    UserActivity newUserActivity = userActivity.toObject(UserActivity.class);
+                    newUserActivity.setId(userActivity.getId());
+
+                    newUserActivity.setLocalDateTime(LocalDateTime.ofInstant(newUserActivity.getTimestamp().toDate().toInstant(), ZoneId.systemDefault()).toString());
+
+                    newUserActivity.setUser(getUserMinimalInfo(newUserActivity.getUserId()));
+
+                    newUserActivity.setBook(new Book());
+
+                    userFollowActivitiesForApp.add(newUserActivity);
+
+                }
+
+                return userFollowActivitiesForApp;
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
 
-        return followersList;
+        return userFollowActivitiesForApp;
     }
 
 

@@ -21,6 +21,8 @@ public class User {
     @NotNull
     private final UserPrivacy userPrivacy;
     @NotNull
+    private final UserFollowState userFollowState;
+    @NotNull
     private final List<String> followersUsers;
     @NotNull
     private final List<String> followingUsers;
@@ -40,6 +42,7 @@ public class User {
         this.profilePictureURL = "";
         this.description = "";
         this.userPrivacy = UserPrivacy.PUBLIC;
+        this.userFollowState = UserFollowState.FOLLOWING;
         this.followersUsers = new ArrayList<>();
         this.followingUsers = new ArrayList<>();
         this.userActivities = new ArrayList<>();
@@ -50,7 +53,7 @@ public class User {
 
     public User(@NotNull String email, @NotNull String userName, @NotNull String userAlias,
                 @NotNull String profilePictureURL, @NotNull String description,
-                @NotNull UserPrivacy userPrivacy, @NotNull List<String> followedUsers,
+                @NotNull UserPrivacy userPrivacy, @NotNull UserFollowState userFollowState, @NotNull List<String> followedUsers,
                 @NotNull List<String> followingUsers, @NotNull List<String> userActivities,
                 @NotNull List<BookList> userDefaultLists, @NotNull List<String> userLists,
                 @NotNull List<String> followRequestList) {
@@ -60,6 +63,7 @@ public class User {
         this.profilePictureURL = profilePictureURL;
         this.description = description;
         this.userPrivacy = userPrivacy;
+        this.userFollowState = userFollowState;
         this.followersUsers = followedUsers;
         this.followingUsers = followingUsers;
         this.userActivities = userActivities;
@@ -70,7 +74,7 @@ public class User {
 
     public User(@NotNull String email, @NotNull String userName, @NotNull String profilePictureURL,
                 @NotNull String userAlias) {
-        this(email, userName, userAlias, profilePictureURL, "", UserPrivacy.PUBLIC,
+        this(email, userName, userAlias, profilePictureURL, "", UserPrivacy.PUBLIC,UserFollowState.FOLLOWING,
                 new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),
                 new ArrayList<>());
     }
@@ -81,6 +85,10 @@ public class User {
 
     public String getProfilePictureURL() {
         return profilePictureURL;
+    }
+
+    public UserFollowState getUserFollowState() {
+        return userFollowState;
     }
 
     public List<String> getUserLists() {
