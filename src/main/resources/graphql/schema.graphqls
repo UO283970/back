@@ -1,6 +1,7 @@
 type Query{
     #User queries
     login(email: String!, password: String!): UserLogin!
+    tokenCheck: Boolean!
     logout: String!
     refreshToken(oldRefreshToken: String!): String!
     getUserSearchInfo(userQuery: String!): [User!]!
@@ -15,6 +16,8 @@ type Query{
     getBasicListInfoList(userId: String!): [BookList!]!
     getUserDefaultList(userId: String!, listId: String!): BookList
     getUserDefaultListsList(userId: String!): [BookList!]!
+    getDefaultListsWithBook(bookId: String!): String!
+    getListsWithBook(bookId: String!): [String!]!
     searchLists(userQuery: String!): [BookList!]!
 
 
@@ -44,8 +47,8 @@ type Mutation{
     deleteList(listId: String!): Boolean!
     addBookToDefaultList(listId: String!, bookId: String!): ReadingState!
     removeBookFromDefaultList(listId: String!, bookId: String!): Boolean!
-    addBookToList(listId: String!, bookId: String!): Boolean!
-    removeBookFromList(listId: String!, bookId: String!): Boolean!
+    addBookToList(listIds: [String!]!, bookId: String!): Boolean!
+    removeBookFromList(listIds: [String!]!, bookId: String!): Boolean!
 
     #User activity mutations
     addActivity(activityText : String!, score: Int!, bookId: String, userActivityType: UserActivityType): Boolean!
@@ -126,6 +129,11 @@ type BookList{
     description: String!
     listUserId: String!
     listImage: String!
+}
+
+type BookListsWithLocation{
+    bookLists: [BookList!]!
+    listLocation: String!
 }
 
 type Book{

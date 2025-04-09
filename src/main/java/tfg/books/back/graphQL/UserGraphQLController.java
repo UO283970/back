@@ -29,6 +29,11 @@ public class UserGraphQLController {
     }
 
     @QueryMapping
+    public Boolean tokenCheck(){
+        return userService.tokenCheck();
+    }
+
+    @QueryMapping
     @PreAuthorize("isAuthenticated()")
     public String logout() throws FirebaseAuthException {
         return userService.logout();

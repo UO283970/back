@@ -6,9 +6,9 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BookCustomSerializer implements JsonDeserializer<BookForSearch> {
+public class BookCustomSerializer implements JsonDeserializer<Book> {
     @Override
-    public BookForSearch deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+    public Book deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 
         JsonObject bookInfo = json.getAsJsonObject().get("volumeInfo").getAsJsonObject();
 
@@ -57,6 +57,6 @@ public class BookCustomSerializer implements JsonDeserializer<BookForSearch> {
             }
         }
 
-        return new BookForSearch(title, bookId, publishYear, author, coverImageURL, pages, description, subjects);
+        return new Book(title, bookId, publishYear, author, coverImageURL, pages, description, subjects);
     }
 }

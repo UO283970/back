@@ -19,7 +19,7 @@ public class BookList {
     @NotNull
     private final BookListPrivacy bookListPrivacy;
     @NotNull
-    private final List<Book> listOfBooks;
+    private List<Book> listOfBooks;
     @NotNull
     private String listId;
     @NotNull
@@ -70,8 +70,24 @@ public class BookList {
         return this.description;
     }
 
+    public List<Book> getListOfBooks() {
+        return listOfBooks;
+    }
+
+    public void setListOfBooks(List<Book> listOfBooks) {
+        this.listOfBooks = listOfBooks;
+    }
+
+    public int getNumberOfBooks() {
+        return numberOfBooks;
+    }
+
     public void setNumberOfBooks(int numberOfBooks) {
         this.numberOfBooks = numberOfBooks;
+    }
+
+    public String getListImage() {
+        return listImage;
     }
 
     public enum BookListPrivacy {

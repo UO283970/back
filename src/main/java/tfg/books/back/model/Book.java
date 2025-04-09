@@ -8,8 +8,6 @@ import java.util.List;
 public class Book {
 
     @NotNull
-    private final String bookId;
-    @NotNull
     private final String title;
     @NotNull
     private final String author;
@@ -24,12 +22,18 @@ public class Book {
     @NotNull
     private final String details;
     @NotNull
-    private final ReadingState readingState;
-    @NotNull
     private final String coverImageURL;
-    public Book(String bookId, @NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore,
+    @NotNull
+    private final String publishYear;
+    @NotNull
+    private String bookId;
+    @NotNull
+    private ReadingState readingState;
+
+    public Book(String bookId, @NotNull String tittle, @NotNull String author, @NotNull int pages,
+                @NotNull Double meanScore,
                 @NotNull int userScore, @NotNull List<String> subjects, @NotNull String details,
-                @NotNull ReadingState readingState, @NotNull String imageUrl) {
+                @NotNull ReadingState readingState, @NotNull String imageUrl, String publishYear) {
         this.bookId = bookId;
         this.title = tittle;
         this.author = author;
@@ -40,13 +44,16 @@ public class Book {
         this.details = details;
         this.readingState = readingState;
         this.coverImageURL = imageUrl;
+        this.publishYear = publishYear;
     }
 
-    public Book(@NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore, @NotNull ReadingState readingState, @NotNull String imageUrl, String bookId){
-        this(bookId, tittle,author,pages,meanScore, 0, new ArrayList<String>(), "",readingState,imageUrl);
+    public Book(@NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore,
+                @NotNull ReadingState readingState, @NotNull String imageUrl, String bookId) {
+        this(bookId, tittle, author, pages, meanScore, 0, new ArrayList<String>(), "", readingState, imageUrl, "");
     }
 
     public Book() {
+        this.publishYear = "";
         this.bookId = "";
         this.title = "";
         this.author = "";
@@ -57,6 +64,12 @@ public class Book {
         this.details = "";
         this.readingState = ReadingState.NOT_IN_LIST;
         this.coverImageURL = "";
+    }
+
+    public Book(String title, String bookId, String publishYear, String author, String coverImageURL, String pages,
+                String description, List<String> subjects) {
+        this(bookId, title, author, Integer.parseInt(pages), 0.0, 0, subjects, description, ReadingState.NOT_IN_LIST,
+                coverImageURL, publishYear);
     }
 
     public String getTitle() {
@@ -91,8 +104,20 @@ public class Book {
         return this.readingState;
     }
 
+    public void setReadingState(ReadingState readingState) {
+        this.readingState = readingState;
+    }
+
     public String getCoverImageURL() {
         return this.coverImageURL;
+    }
+
+    public String getBookId() {
+        return bookId;
+    }
+
+    public void setBookId(String bookId) {
+        this.bookId = bookId;
     }
 
     public enum ReadingState {
@@ -103,5 +128,5 @@ public class Book {
         READ,
         PLAN_TO_READ
     }
-    
+
 }

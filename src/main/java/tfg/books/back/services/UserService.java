@@ -65,6 +65,9 @@ public class UserService {
         }
     }
 
+    public Boolean tokenCheck() {
+        return !authenticatedUserIdProvider.getUserId().isBlank();
+    }
     public String refreshToken(@NotNull String oldRefreshToken) {
         RefreshTokenResponse response = firebaseAuthClient.exchangeRefreshToken(oldRefreshToken);
         if (response.id_token() != null && !response.id_token().isEmpty()) {

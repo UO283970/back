@@ -27,7 +27,7 @@ public class ListGraphQLController {
     }
 
     @QueryMapping
-    public ListWithId getAllListInfo(@Argument("listId") String listId) {
+    public BookList getAllListInfo(@Argument("listId") String listId) {
         return listService.getAllListInfo(listId);
     }
 
@@ -39,6 +39,16 @@ public class ListGraphQLController {
     @QueryMapping
     public List<BookList> getUserDefaultListsList(@Argument("userId") String userId) {
         return listService.getDefaultUserLists(userId);
+    }
+
+    @QueryMapping
+    public String getDefaultListsWithBook(@Argument("bookId") String bookId) {
+        return listService.getDefaultListsWithBook(bookId);
+    }
+
+    @QueryMapping
+    public List<String> getListsWithBook(@Argument("bookId") String bookId) {
+        return listService.getListsWithBook(bookId);
     }
 
     @QueryMapping
@@ -75,12 +85,12 @@ public class ListGraphQLController {
     }
 
     @MutationMapping
-    public Boolean addBookToList(@Argument("listId") String listId, @Argument("bookId") String bookId) {
-        return listService.addBookToList(listId, bookId);
+    public Boolean addBookToList(@Argument("listIds") List<String> listIds, @Argument("bookId") String bookId) {
+        return listService.addBookToList(listIds, bookId);
     }
 
     @MutationMapping
-    public Boolean removeBookFromList(@Argument("listId") String listId, @Argument("bookId") String bookId) {
-        return listService.removeBookFromList(listId,bookId);
+    public Boolean removeBookFromList(@Argument("listIds") List<String> listIds, @Argument("bookId") String bookId) {
+        return listService.removeBookFromList(listIds,bookId);
     }
 }
