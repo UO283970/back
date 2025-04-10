@@ -7,7 +7,7 @@ import com.google.firebase.database.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.firebase.AuthenticatedUserIdProvider;
-import tfg.books.back.model.Book;
+import tfg.books.back.model.books.Book;
 import tfg.books.back.model.userActivity.UserActivity;
 import tfg.books.back.model.userActivity.UserActivityFirebase;
 import tfg.books.back.model.userModels.UserForProfile;

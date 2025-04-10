@@ -1,6 +1,6 @@
 package tfg.books.back.model.list;
 
-import tfg.books.back.model.Book;
+import tfg.books.back.model.books.Book;
 
 import java.util.List;
 

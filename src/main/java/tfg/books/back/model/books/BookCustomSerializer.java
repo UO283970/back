@@ -1,4 +1,4 @@
-package tfg.books.back.model;
+package tfg.books.back.model.books;
 
 import com.google.gson.*;
 
@@ -21,7 +21,7 @@ public class BookCustomSerializer implements JsonDeserializer<Book> {
 
         String publishYear = "";
         if (bookInfo.getAsJsonObject().get("publishedDate") != null) {
-            publishYear = bookInfo.getAsJsonObject().get("publishedDate").getAsString().substring(0, 4);
+            publishYear = bookInfo.getAsJsonObject().get("publishedDate").getAsString().split("-")[0];
         }
 
         String author = "";
@@ -29,18 +29,13 @@ public class BookCustomSerializer implements JsonDeserializer<Book> {
             author = bookInfo.getAsJsonObject().get("authors").getAsJsonArray().get(0).getAsString();
         }
 
-//        String authorKey = "";
-//        if(json.getAsJsonObject().get("author_key") != null){
-//            authorKey = json.getAsJsonObject().get("author_key").getAsJsonArray().get(0).getAsString();
-//        }
-
         String coverImageURL = "";
-        if (bookInfo.getAsJsonObject().get("imageLinks") != null && bookInfo.getAsJsonObject().get("imageLinks").getAsJsonObject().get("smallThumbnail") != null) {
+        if (bookInfo.getAsJsonObject().get("imageLinks") != null && bookInfo.getAsJsonObject().get("imageLinks").getAsJsonObject().get("thumbnail") != null) {
             coverImageURL =
-                    bookInfo.getAsJsonObject().get("imageLinks").getAsJsonObject().get("smallThumbnail").getAsString();
+                    bookInfo.getAsJsonObject().get("imageLinks").getAsJsonObject().get("thumbnail").getAsString();
         }
 
-        String pages = "";
+        String pages = "0";
         if (bookInfo.getAsJsonObject().get("pageCount") != null) {
             pages = bookInfo.getAsJsonObject().get("pageCount").getAsString();
         }

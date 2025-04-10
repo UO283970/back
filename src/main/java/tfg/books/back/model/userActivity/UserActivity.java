@@ -2,7 +2,7 @@ package tfg.books.back.model.userActivity;
 
 import com.google.cloud.Timestamp;
 import com.google.firebase.database.annotations.NotNull;
-import tfg.books.back.model.Book;
+import tfg.books.back.model.books.Book;
 import tfg.books.back.model.userModels.UserForSearch;
 
 public class UserActivity {

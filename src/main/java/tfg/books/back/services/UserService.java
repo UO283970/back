@@ -12,7 +12,7 @@ import tfg.books.back.checks.UserChecks;
 import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.firebase.AuthenticatedUserIdProvider;
 import tfg.books.back.firebase.FirebaseAuthClient;
-import tfg.books.back.model.Book;
+import tfg.books.back.model.books.Book;
 import tfg.books.back.model.list.BookList;
 import tfg.books.back.model.list.DefaultListForFirebase;
 import tfg.books.back.model.userActivity.UserActivity;
@@ -396,40 +396,10 @@ public class UserService {
                                 UserActivity.UserActivityType.REVIEW).count().get().get().getCount()).intValue();
 
 
-                List<BookList> defaultUserList = new ArrayList<>();
-                QuerySnapshot listOfDocuments =
-                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
-                                collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).get().get();
+                List<BookList> defaultUserList = listService.getDefaultUserLists(userId);
 
-                for (QueryDocumentSnapshot listDocument : listOfDocuments) {
-                    BookList actualBookList = listDocument.toObject(BookList.class);
-                    actualBookList.setListId(listDocument.getId());
-                    defaultUserList.add(actualBookList);
-                }
+                List<BookList> bookList = listService.getBasicListInfoList(userId);
 
-                int count = 0;
-                for (BookList list : defaultUserList) {
-                    list.setNumberOfBooks(Long.valueOf(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
-                            collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).document(String.valueOf(count))
-                            .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().get().get().getCount()).intValue());
-                    count++;
-                }
-
-                QuerySnapshot userLists = firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo(
-                        "listUserId", userId).get().get();
-
-                List<BookList> bookList = new ArrayList<>();
-
-                for (QueryDocumentSnapshot query : userLists) {
-                    BookList list = query.toObject(BookList.class);
-                    list.setListId(query.getId());
-                    bookList.add(list);
-                }
-
-                for (BookList list : bookList) {
-                    list.setNumberOfBooks(Long.valueOf(firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(list.getListId())
-                            .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().get().get().getCount()).intValue());
-                }
 
                 UserFollowState userFollowState = UserFollowState.OWN;
 

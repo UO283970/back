@@ -3,7 +3,7 @@ package tfg.books.back.graphQL;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
-import tfg.books.back.model.Book;
+import tfg.books.back.model.books.Book;
 import tfg.books.back.services.BookAPIService;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package tfg.books.back.model.list;
 
 import com.google.firebase.database.annotations.NotNull;
-import tfg.books.back.model.Book;
+import tfg.books.back.model.books.Book;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +15,9 @@ public class BookList {
     @NotNull
     private final String description;
     @NotNull
-    private final String listImage;
-    @NotNull
     private final BookListPrivacy bookListPrivacy;
+    @NotNull
+    private String listImage;
     @NotNull
     private List<Book> listOfBooks;
     @NotNull
@@ -25,7 +25,8 @@ public class BookList {
     @NotNull
     private int numberOfBooks;
 
-    public BookList(@NotNull String listId, @NotNull String listUserId, @NotNull String listName, @NotNull String description,
+    public BookList(@NotNull String listId, @NotNull String listUserId, @NotNull String listName,
+                    @NotNull String description,
                     @NotNull BookListPrivacy bookListprivacy, @NotNull List<Book> books) {
         this.listId = listId;
         this.listUserId = listUserId;
@@ -50,7 +51,7 @@ public class BookList {
         return listId;
     }
 
-    public void setListId(@NotNull String listId){
+    public void setListId(@NotNull String listId) {
         this.listId = listId;
     }
 
@@ -88,6 +89,10 @@ public class BookList {
 
     public String getListImage() {
         return listImage;
+    }
+
+    public void setListImage(String listImage) {
+        this.listImage = listImage;
     }
 
     public enum BookListPrivacy {
