@@ -21,8 +21,6 @@ public class User {
     @NotNull
     private final UserPrivacy userPrivacy;
     @NotNull
-    private final UserFollowState userFollowState;
-    @NotNull
     private final List<String> followersUsers;
     @NotNull
     private final List<String> followingUsers;
@@ -34,6 +32,8 @@ public class User {
     private final List<String> userLists;
     @NotNull
     private final List<String> followRequestList;
+    @NotNull
+    private UserFollowState userFollowState;
 
     public User() {
         this.email = "";
@@ -42,7 +42,7 @@ public class User {
         this.profilePictureURL = "";
         this.description = "";
         this.userPrivacy = UserPrivacy.PUBLIC;
-        this.userFollowState = UserFollowState.FOLLOWING;
+        this.userFollowState = UserFollowState.NOT_FOLLOW;
         this.followersUsers = new ArrayList<>();
         this.followingUsers = new ArrayList<>();
         this.userActivities = new ArrayList<>();
@@ -89,6 +89,10 @@ public class User {
 
     public UserFollowState getUserFollowState() {
         return userFollowState;
+    }
+
+    public void setUserFollowState(UserFollowState userFollowState) {
+        this.userFollowState = userFollowState;
     }
 
     public List<String> getUserLists() {

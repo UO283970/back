@@ -20,8 +20,8 @@ import tfg.books.back.model.books.BookCustomSerializer;
 import tfg.books.back.model.list.BookList;
 import tfg.books.back.model.list.ListForFirebase;
 import tfg.books.back.model.list.ListWithId;
+import tfg.books.back.model.userModels.User;
 
-import java.nio.file.AccessDeniedException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -94,56 +94,63 @@ public class ListService {
 
                     return bookListList;
                 }
-                QuerySnapshot userList = firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
-                        .whereEqualTo("listUserId", userId).whereNotEqualTo("bookListPrivacy",
-                                BookList.BookListPrivacy.PRIVATE)
-                        .get().get();
 
-                for (QueryDocumentSnapshot query : userList) {
-                    BookList list = query.toObject(BookList.class);
-                    list.setListId(query.getId());
+                boolean userFollows = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                        .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(authenticatedUserIdProvider.getUserId()).get().get().exists();
+
+                if (!Objects.equals(document.getString("userPrivacy"), User.UserPrivacy.PRIVATE.toString()) || userFollows) {
+                    QuerySnapshot userList = firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
+                            .whereEqualTo("listUserId", userId).whereNotEqualTo("bookListPrivacy",
+                                    BookList.BookListPrivacy.PRIVATE)
+                            .get().get();
+
+                    for (QueryDocumentSnapshot query : userList) {
+                        BookList list = query.toObject(BookList.class);
+                        list.setListId(query.getId());
 
 
-                    list.setNumberOfBooks(Long.valueOf(firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(query.getId())
-                            .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().get().get().getCount()).intValue());
+                        list.setNumberOfBooks(Long.valueOf(firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(query.getId())
+                                .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().get().get().getCount()).intValue());
 
-                    if (list.getNumberOfBooks() != 0) {
-                        QuerySnapshot listOfBooks =
-                                (firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(query.getId())
-                                        .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy(
-                                                "timeAdded").limit(1).get().get());
+                        if (list.getNumberOfBooks() != 0) {
+                            QuerySnapshot listOfBooks =
+                                    (firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(query.getId())
+                                            .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy(
+                                                    "timeAdded").limit(1).get().get());
 
-                        String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
+                            String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
 
-                        String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
-                                        listOfBooks.getDocuments().get(0).getId()),
-                                HttpMethod.GET, null, String.class).getBody();
+                            String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
+                                            listOfBooks.getDocuments().get(0).getId()),
+                                    HttpMethod.GET, null, String.class).getBody();
 
-                        assert bookFromApi != null;
-                        JsonElement resultAsJSON =
-                                JsonParser.parseString(bookFromApi).getAsJsonObject().get("volumeInfo");
+                            assert bookFromApi != null;
+                            JsonElement resultAsJSON =
+                                    JsonParser.parseString(bookFromApi).getAsJsonObject().get("volumeInfo");
 
-                        String coverImageURL = "";
-                        if (resultAsJSON.getAsJsonObject().get("imageLinks") != null && resultAsJSON.getAsJsonObject()
-                                .get("imageLinks").getAsJsonObject().get("thumbnail") != null) {
-                            coverImageURL =
-                                    resultAsJSON.getAsJsonObject().get("imageLinks").getAsJsonObject().get("thumbnail"
-                                    ).getAsString();
+                            String coverImageURL = "";
+                            if (resultAsJSON.getAsJsonObject().get("imageLinks") != null && resultAsJSON.getAsJsonObject()
+                                    .get("imageLinks").getAsJsonObject().get("thumbnail") != null) {
+                                coverImageURL =
+                                        resultAsJSON.getAsJsonObject().get("imageLinks").getAsJsonObject().get(
+                                                "thumbnail"
+                                        ).getAsString();
+                            }
+
+                            list.setListImage(coverImageURL);
+
                         }
 
-                        list.setListImage(coverImageURL);
-
+                        bookListList.add(list);
                     }
 
-                    bookListList.add(list);
-                }
+                    if (firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                            .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(authenticatedUserIdProvider.getUserId()).get().get().exists()) {
+                        return bookListList;
+                    }
 
-                if (firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
-                        .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(userId).get().get().exists()) {
-                    return bookListList;
+                    return bookListList.stream().filter(b -> b.getBookListPrivacy().equals(BookList.BookListPrivacy.PUBLIC)).toList();
                 }
-
-                return bookListList.stream().filter(b -> b.getBookListPrivacy().equals(BookList.BookListPrivacy.PUBLIC)).toList();
 
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -215,7 +222,13 @@ public class ListService {
 
         try {
             DocumentSnapshot document = future.get();
-            if (document.exists()) {
+
+            boolean userFollows = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                    .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(authenticatedUserIdProvider.getUserId()).get().get().exists();
+
+
+            if (document.exists() && (userId.equals(authenticatedUserIdProvider.getUserId()) || !Objects.equals(document.getString(
+                    "userPrivacy"), User.UserPrivacy.PRIVATE.toString()) || userFollows)) {
                 QuerySnapshot listOfDocuments =
                         firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
                                 collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).get().get();
@@ -245,7 +258,8 @@ public class ListService {
                                 JsonParser.parseString(bookFromApi).getAsJsonObject().get("volumeInfo");
 
                         String coverImageURL = "";
-                        if (resultAsJSON.getAsJsonObject().get("imageLinks") != null && resultAsJSON.getAsJsonObject().get("imageLinks").getAsJsonObject().get("thumbnail") != null) {
+                        if (resultAsJSON.getAsJsonObject().get("imageLinks") != null && resultAsJSON.getAsJsonObject()
+                                .get("imageLinks").getAsJsonObject().get("thumbnail") != null) {
                             coverImageURL =
                                     resultAsJSON.getAsJsonObject().get("imageLinks").getAsJsonObject().get("thumbnail"
                                     ).getAsString();
@@ -506,11 +520,9 @@ public class ListService {
                 assert bookList != null;
                 if (bookList.getListUserId().equals(userId)) {
                     return true;
-                } else {
-                    throw new AccessDeniedException("You don't have access to this resource");
                 }
             }
-        } catch (InterruptedException | ExecutionException | AccessDeniedException e) {
+        } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
         return false;

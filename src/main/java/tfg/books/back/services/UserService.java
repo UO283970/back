@@ -68,6 +68,7 @@ public class UserService {
     public Boolean tokenCheck() {
         return !authenticatedUserIdProvider.getUserId().isBlank();
     }
+
     public String refreshToken(@NotNull String oldRefreshToken) {
         RefreshTokenResponse response = firebaseAuthClient.exchangeRefreshToken(oldRefreshToken);
         if (response.id_token() != null && !response.id_token().isEmpty()) {
@@ -346,7 +347,7 @@ public class UserService {
         }
 
         for (QueryDocumentSnapshot document : userDocument) {
-            if(!document.getId().equals(authenticatedUserIdProvider.getUserId())){
+            if (!document.getId().equals(authenticatedUserIdProvider.getUserId())) {
                 UserForSearch userForSearch = document.toObject(UserForSearch.class);
                 searchUsers.add(new UserForSearch(document.getId(), userForSearch.userName(), userForSearch.userAlias(),
                         userForSearch.profilePictureURL()));
@@ -365,7 +366,8 @@ public class UserService {
             if (document.exists()) {
                 UserForSearch userObtained = document.toObject(UserForSearch.class);
                 assert userObtained != null;
-                return new UserForSearch(userId,userObtained.userName(),userObtained.userAlias(),userObtained.profilePictureURL());
+                return new UserForSearch(userId, userObtained.userName(), userObtained.userAlias(),
+                        userObtained.profilePictureURL());
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
@@ -450,29 +452,8 @@ public class UserService {
                     userFollowState = UserFollowState.REQUESTED;
                 }
 
-                List<BookList> defaultUserList = new ArrayList<>();
-                List<BookList> userLists = new ArrayList<>();
-
-                if (!basicInfoUser.userPrivacy().equals(UserPrivacy.PRIVATE) && userFollowState.equals(UserFollowState.FOLLOWING)) {
-                    QuerySnapshot listOfDocuments =
-                            firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
-                                    collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).get().get();
-
-                    for (QueryDocumentSnapshot listDocument : listOfDocuments) {
-                        BookList actualBookList = listDocument.toObject(BookList.class);
-                        actualBookList.setListId(listDocument.getId());
-                        defaultUserList.add(actualBookList);
-                    }
-
-                    int count = 0;
-                    for (BookList list : defaultUserList) {
-                        list.setNumberOfBooks(Long.valueOf(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
-                                collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).document(String.valueOf(count))
-                                .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().get().get().getCount()).intValue());
-                        count++;
-                    }
-                    userLists = listService.getBasicListInfoList(userId);
-                }
+                List<BookList> defaultUserList = listService.getDefaultUserLists(userId);
+                List<BookList> userLists = listService.getBasicListInfoList(userId);
 
                 return new UserForApp(userId, basicInfoUser.userName(), basicInfoUser.userAlias(),
                         basicInfoUser.profilePictureURL(), basicInfoUser.description(), basicInfoUser.userPrivacy(),
@@ -487,7 +468,7 @@ public class UserService {
     }
 
     public List<UserForProfile> getUsersListOFUser(@NotNull String userId, @NotNull String collectionName) {
-        if(userId.isBlank()){
+        if (userId.isBlank()) {
             userId = authenticatedUserIdProvider.getUserId();
         }
 
@@ -506,6 +487,19 @@ public class UserService {
                             .document(followerUserId.getId()).get().get().toObject(User.class);
 
                     assert actualUser != null;
+
+                    if (followerUserId.getId().equals(authenticatedUserIdProvider.getUserId())) {
+                        actualUser.setUserFollowState(UserFollowState.OWN);
+                    } else if (firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
+                            .document(authenticatedUserIdProvider.getUserId())
+                            .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).document(followerUserId.getId()).get().get().exists()) {
+                        actualUser.setUserFollowState(UserFollowState.FOLLOWING);
+                    }else if(firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
+                            .document(followerUserId.getId())
+                            .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).document(authenticatedUserIdProvider.getUserId()).get().get().exists()){
+                        actualUser.setUserFollowState(UserFollowState.REQUESTED);
+                    }
+
                     followersList.add(new UserForProfile(followerUserId.getId(), actualUser.getUserName(),
                             actualUser.getUserAlias(), actualUser.getProfilePictureURL(),
                             actualUser.getUserFollowState()));
@@ -519,7 +513,7 @@ public class UserService {
     }
 
     public List<UserActivity> getUsersReviews(@NotNull String userId) {
-        if(userId.isBlank()){
+        if (userId.isBlank()) {
             userId = authenticatedUserIdProvider.getUserId();
         }
 
@@ -531,7 +525,8 @@ public class UserService {
         try {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
-                QuerySnapshot userFollowActivities = firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo("userId",
+                QuerySnapshot userFollowActivities =
+                        firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo("userId",
                         userId).whereEqualTo("userActivityType", UserActivity.UserActivityType.REVIEW).get().get();
 
                 for (QueryDocumentSnapshot userActivity : userFollowActivities) {
