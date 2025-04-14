@@ -61,31 +61,7 @@ public class ListService {
                                 .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().get().get().getCount()).intValue());
 
                         if (list.getNumberOfBooks() != 0) {
-                            QuerySnapshot listOfBooks =
-                                    (firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(query.getId())
-                                            .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy(
-                                                    "timeAdded").limit(1).get().get());
-
-                            String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
-
-                            String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
-                                            listOfBooks.getDocuments().get(0).getId()),
-                                    HttpMethod.GET, null, String.class).getBody();
-
-                            assert bookFromApi != null;
-                            JsonElement resultAsJSON =
-                                    JsonParser.parseString(bookFromApi).getAsJsonObject().get("volumeInfo");
-
-                            String coverImageURL = "";
-                            if (resultAsJSON.getAsJsonObject().get("imageLinks") != null && resultAsJSON.getAsJsonObject().get("imageLinks").getAsJsonObject().get("thumbnail") != null) {
-                                coverImageURL =
-                                        resultAsJSON.getAsJsonObject().get("imageLinks").getAsJsonObject().get(
-                                                "thumbnail"
-                                        ).getAsString();
-                            }
-
-                            list.setListImage(coverImageURL);
-
+                            list.setListImage(getImageForList(query.getId()));
                         }
 
                         bookListList.add(list);
@@ -113,32 +89,7 @@ public class ListService {
                                 .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().get().get().getCount()).intValue());
 
                         if (list.getNumberOfBooks() != 0) {
-                            QuerySnapshot listOfBooks =
-                                    (firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(query.getId())
-                                            .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy(
-                                                    "timeAdded").limit(1).get().get());
-
-                            String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
-
-                            String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
-                                            listOfBooks.getDocuments().get(0).getId()),
-                                    HttpMethod.GET, null, String.class).getBody();
-
-                            assert bookFromApi != null;
-                            JsonElement resultAsJSON =
-                                    JsonParser.parseString(bookFromApi).getAsJsonObject().get("volumeInfo");
-
-                            String coverImageURL = "";
-                            if (resultAsJSON.getAsJsonObject().get("imageLinks") != null && resultAsJSON.getAsJsonObject()
-                                    .get("imageLinks").getAsJsonObject().get("thumbnail") != null) {
-                                coverImageURL =
-                                        resultAsJSON.getAsJsonObject().get("imageLinks").getAsJsonObject().get(
-                                                "thumbnail"
-                                        ).getAsString();
-                            }
-
-                            list.setListImage(coverImageURL);
-
+                            list.setListImage(getImageForList(query.getId()));
                         }
 
                         bookListList.add(list);
@@ -242,31 +193,7 @@ public class ListService {
                             .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).count().get().get().getCount()).intValue());
 
                     if (actualBookList.getNumberOfBooks() != 0) {
-                        QuerySnapshot listOfBooks =
-                                firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
-                                        .collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).document(listDocument.getId())
-                                        .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).limit(1).get().get();
-
-                        String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
-
-                        String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
-                                        listOfBooks.getDocuments().get(0).getId()),
-                                HttpMethod.GET, null, String.class).getBody();
-
-                        assert bookFromApi != null;
-                        JsonElement resultAsJSON =
-                                JsonParser.parseString(bookFromApi).getAsJsonObject().get("volumeInfo");
-
-                        String coverImageURL = "";
-                        if (resultAsJSON.getAsJsonObject().get("imageLinks") != null && resultAsJSON.getAsJsonObject()
-                                .get("imageLinks").getAsJsonObject().get("thumbnail") != null) {
-                            coverImageURL =
-                                    resultAsJSON.getAsJsonObject().get("imageLinks").getAsJsonObject().get("thumbnail"
-                                    ).getAsString();
-                        }
-
-                        actualBookList.setListImage(coverImageURL);
-
+                        actualBookList.setListImage(getImageForDefaultList(userId, listDocument.getId()));
                     }
 
 
@@ -383,16 +310,19 @@ public class ListService {
     }
 
     public ReadingState addBookToDefaultList(@NotNull String listId, @NotNull String bookId) {
-        for (BookList list : getDefaultUserLists("")) {
-            removeBookToDefaultList(list.getListId(), bookId);
-        }
-
         String userId = authenticatedUserIdProvider.getUserId();
 
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
 
         try {
+            DocumentSnapshot bookDocument = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                    .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION).document(bookId).get().get();
+
+            if (bookDocument.exists()) {
+                removeBookToDefaultList(bookDocument.getString("listId"), bookId);
+            }
+
             DocumentSnapshot document = future.get();
             if (document.exists()) {
                 DocumentReference bookList =
@@ -595,5 +525,76 @@ public class ListService {
         }
 
         return listIds;
+    }
+
+    public String getImageForDefaultList(String userId, String listId) {
+        String image = "";
+        QuerySnapshot listOfBooks = null;
+        if(userId.isBlank()){
+            userId = authenticatedUserIdProvider.getUserId();
+        }
+
+        try {
+            listOfBooks = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                    .collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).document(listId)
+                    .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).limit(1).get().get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        if(listOfBooks != null){
+            String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
+
+            String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
+                            listOfBooks.getDocuments().get(0).getId()),
+                    HttpMethod.GET, null, String.class).getBody();
+
+            assert bookFromApi != null;
+            JsonElement resultAsJSON =
+                    JsonParser.parseString(bookFromApi).getAsJsonObject().get("volumeInfo");
+
+            if (resultAsJSON.getAsJsonObject().get("imageLinks") != null && resultAsJSON.getAsJsonObject()
+                    .get("imageLinks").getAsJsonObject().get("thumbnail") != null) {
+                image =
+                        resultAsJSON.getAsJsonObject().get("imageLinks").getAsJsonObject().get("thumbnail"
+                        ).getAsString();
+            }
+        }
+
+        return image;
+    }
+
+    public String getImageForList(String listId) {
+        String image = "";
+        QuerySnapshot listOfBooks = null;
+        try {
+            listOfBooks = (firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(listId)
+                    .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy(
+                            "timeAdded").limit(1).get().get());
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (listOfBooks != null) {
+            String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
+
+            String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
+                            listOfBooks.getDocuments().get(0).getId()),
+                    HttpMethod.GET, null, String.class).getBody();
+
+            assert bookFromApi != null;
+            JsonElement resultAsJSON =
+                    JsonParser.parseString(bookFromApi).getAsJsonObject().get("volumeInfo");
+
+            if (resultAsJSON.getAsJsonObject().get("imageLinks") != null && resultAsJSON.getAsJsonObject()
+                    .get("imageLinks").getAsJsonObject().get("thumbnail") != null) {
+                image =
+                        resultAsJSON.getAsJsonObject().get("imageLinks").getAsJsonObject().get(
+                                "thumbnail"
+                        ).getAsString();
+            }
+        }
+
+        return image;
     }
 }

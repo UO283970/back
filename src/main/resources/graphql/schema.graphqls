@@ -19,6 +19,8 @@ type Query{
     getDefaultListsWithBook(bookId: String!): String!
     getListsWithBook(bookId: String!): [String!]!
     searchLists(userQuery: String!): [BookList!]!
+    getImageForDefaultList(listId: String!): String!
+    getImageForList(listId: String!): String!
 
 
     #User activity queries

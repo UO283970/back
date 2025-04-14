@@ -52,6 +52,16 @@ public class ListGraphQLController {
     }
 
     @QueryMapping
+    public String getImageForDefaultList(@Argument("listId") String listId) {
+        return listService.getImageForDefaultList("",listId);
+    }
+
+    @QueryMapping
+    public String getImageForList(@Argument("listId") String listId) {
+        return listService.getImageForList(listId);
+    }
+
+    @QueryMapping
     public List<ListWithId> searchLists(@Argument("userQuery") String userQuery) {
         return listService.searchLists(userQuery);
     }
