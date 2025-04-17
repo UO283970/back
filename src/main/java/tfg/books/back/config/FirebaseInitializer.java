@@ -6,6 +6,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.cloud.FirestoreClient;
+import com.google.firebase.cloud.StorageClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class FirebaseInitializer {
             assert serviceAccount != null;
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .setStorageBucket("tfgbooks-8c31b.firebasestorage.app")
                     .build();
             return FirebaseApp.initializeApp(options);
         }
@@ -40,6 +42,11 @@ public class FirebaseInitializer {
     @Bean
     public Firestore firestore(FirebaseApp firebaseApp) {
         return FirestoreClient.getFirestore(firebaseApp);
+    }
+
+    @Bean
+    public StorageClient storage(FirebaseApp firebaseApp) {
+        return StorageClient.getInstance(firebaseApp);
     }
 
 }

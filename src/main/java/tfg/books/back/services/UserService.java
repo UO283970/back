@@ -2,10 +2,12 @@ package tfg.books.back.services;
 
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
+import com.google.cloud.storage.Bucket;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.UserRecord.CreateRequest;
+import com.google.firebase.cloud.StorageClient;
 import com.google.firebase.database.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import tfg.books.back.checks.UserChecks;
@@ -22,12 +24,12 @@ import tfg.books.back.model.userModels.User.UserPrivacy;
 import tfg.books.back.requests.FirebaseSignInResponse;
 import tfg.books.back.requests.RefreshTokenResponse;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -39,14 +41,16 @@ public class UserService {
     private final FirebaseAuth firebaseAuth;
     private final AuthenticatedUserIdProvider authenticatedUserIdProvider;
     private final Firestore firestore;
+    private final StorageClient storage;
     private final ListService listService;
 
     public UserService(FirebaseAuth firebaseAuth, AuthenticatedUserIdProvider authenticatedUserIdProvider,
-                       Firestore firestore, FirebaseAuthClient firebaseAuthClient, ListService listService) {
+                       Firestore firestore, FirebaseAuthClient firebaseAuthClient, StorageClient storage, ListService listService) {
         this.firebaseAuthClient = firebaseAuthClient;
         this.firebaseAuth = firebaseAuth;
         this.authenticatedUserIdProvider = authenticatedUserIdProvider;
         this.firestore = firestore;
+        this.storage = storage;
         this.listService = listService;
     }
 
@@ -132,13 +136,13 @@ public class UserService {
         }
     }
 
-    public Boolean update(@NotNull String userAlias, @NotNull String userName, @NotNull String profilePictureURL,
+    public String update(@NotNull String userAlias, @NotNull String userName, @NotNull String profilePictureURL,
                           @NotNull String description, @NotNull UserPrivacy privacyLevel) {
         String userId = authenticatedUserIdProvider.getUserId();
         DocumentReference document = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
 
         try {
-            if (!document.get().get().get("userAlias").toString().equals(userAlias)) {
+            if (!Objects.requireNonNull(document.get().get().get("userAlias")).toString().equals(userAlias)) {
                 QuerySnapshot userAliasRepeat = null;
 
                 userAliasRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
@@ -146,11 +150,11 @@ public class UserService {
 
 
                 if (userAliasRepeat != null && !userAliasRepeat.isEmpty()) {
-                    return false;
+                    return "";
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
-            return false;
+            return "";
         }
 
         document.update("userAlias", userAlias);
@@ -159,8 +163,21 @@ public class UserService {
         document.update("description", description);
         document.update("userPrivacy", privacyLevel.toString());
 
+        byte[] decodedBytes = Base64.getDecoder().decode(profilePictureURL);
+        String imageName = "images/" + userId + ".jpg";
 
-        return true;
+        Bucket bucket = storage.bucket();
+
+        bucket.create(imageName, decodedBytes, "image/jpeg");
+
+        bucket.get(imageName);
+
+        String imageUrl = String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media",
+                bucket.getName(), URLEncoder.encode(imageName, StandardCharsets.UTF_8));
+
+        document.update("profilePictureURL",imageUrl);
+
+        return imageUrl;
     }
 
     public boolean delete() throws FirebaseAuthException {

@@ -33,7 +33,7 @@ type Query{
 type Mutation{
     #User mutations
     createUser(email: String!, password: String!, repeatedPassword: String!, userAlias: String!, userName: String!, profilePictureURL: String!): UserRegister!
-    updateUser(userAlias: String!, userName: String!, profilePictureURL: String!, description: String!, privacyLevel: UserPrivacy!): Boolean!
+    updateUser(userAlias: String!, userName: String!, profilePictureURL: String!, description: String!, privacyLevel: UserPrivacy!): String!
     deleteUser: Boolean!
 
     #Follow mutations
