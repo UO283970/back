@@ -49,7 +49,7 @@ public class Book {
 
     public Book(@NotNull String tittle, @NotNull String author, @NotNull int pages, @NotNull Double meanScore,
                 @NotNull ReadingState readingState, @NotNull String imageUrl, String bookId) {
-        this(bookId, tittle, author, pages, meanScore, 0, new ArrayList<String>(), "", readingState, imageUrl, "");
+        this(bookId, tittle, author, pages, meanScore, 0, new ArrayList<>(), "", readingState, imageUrl, "");
     }
 
     public Book() {

@@ -1,4 +1,4 @@
-package tfg.books.back.GrpahQLResolver;
+package tfg.books.back.graphQLResolver;
 
 import graphql.GraphQLError;
 import graphql.schema.DataFetchingEnvironment;
@@ -6,8 +6,8 @@ import org.springframework.graphql.execution.DataFetcherExceptionResolverAdapter
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
-import tfg.books.back.GrpahQLErrors.AppErrorConstants;
-import tfg.books.back.GrpahQLErrors.GraphQLCustomError;
+import tfg.books.back.graphQLErrors.AppErrorConstants;
+import tfg.books.back.graphQLErrors.GraphQLCustomError;
 
 @Component
 public class CustomGraphQLResolver extends DataFetcherExceptionResolverAdapter {

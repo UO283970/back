@@ -55,7 +55,7 @@ public class BookAPIService {
         for (JsonElement bookDocs : resultAsJSON) {
             Book bookForSearch = gson.fromJson(bookDocs, Book.class);
 
-            DocumentSnapshot bookDocumentRelation = null;
+            DocumentSnapshot bookDocumentRelation;
             try {
                 bookDocumentRelation =
                         firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
@@ -102,7 +102,7 @@ public class BookAPIService {
         for (JsonElement bookDocs : resultAsJSON) {
             Book bookForSearch = gson.fromJson(bookDocs, Book.class);
 
-            DocumentSnapshot bookDocumentRelation = null;
+            DocumentSnapshot bookDocumentRelation;
             try {
                 bookDocumentRelation =
                         firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())

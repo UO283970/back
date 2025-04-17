@@ -86,8 +86,7 @@ public class UserGraphQLController {
     @MutationMapping
     public String updateUser(@Argument("userAlias") String userAlias, @Argument("userName") String userName,
                               @Argument("profilePictureURL") String profilePictureURL,
-                              @Argument("description") String description, @Argument("privacyLevel")User.UserPrivacy privacyLevel)
-            throws FirebaseAuthException {
+                              @Argument("description") String description, @Argument("privacyLevel")User.UserPrivacy privacyLevel){
         return userService.update(userAlias, userName, profilePictureURL, description, privacyLevel);
     }
 
@@ -98,32 +97,27 @@ public class UserGraphQLController {
     }
 
     @MutationMapping
-    public UserFollowState followUser(@Argument("friendId") String friendId)
-            throws FirebaseAuthException {
+    public UserFollowState followUser(@Argument("friendId") String friendId){
         return userService.followUser(friendId);
     }
 
     @MutationMapping
-    public Boolean cancelFollow(@Argument("friendId") String friendId)
-            throws FirebaseAuthException {
+    public Boolean cancelFollow(@Argument("friendId") String friendId){
         return userService.cancelFollow(friendId);
     }
 
     @MutationMapping
-    public Boolean acceptRequest(@Argument("friendId") String friendId)
-            throws FirebaseAuthException {
+    public Boolean acceptRequest(@Argument("friendId") String friendId){
         return userService.acceptRequest(friendId);
     }
 
     @MutationMapping
-    public Boolean cancelRequest(@Argument("friendId") String friendId)
-            throws FirebaseAuthException {
+    public Boolean cancelRequest(@Argument("friendId") String friendId){
         return userService.cancelRequest(friendId);
     }
 
     @MutationMapping
-    public Boolean deleteFromFollower(@Argument("friendId") String friendId)
-            throws FirebaseAuthException {
+    public Boolean deleteFromFollower(@Argument("friendId") String friendId){
         return userService.deleteFromFollower(friendId);
     }
 }

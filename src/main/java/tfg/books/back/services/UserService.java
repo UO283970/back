@@ -143,7 +143,7 @@ public class UserService {
 
         try {
             if (!Objects.requireNonNull(document.get().get().get("userAlias")).toString().equals(userAlias)) {
-                QuerySnapshot userAliasRepeat = null;
+                QuerySnapshot userAliasRepeat;
 
                 userAliasRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
                         "userAlias", userAlias).get().get();

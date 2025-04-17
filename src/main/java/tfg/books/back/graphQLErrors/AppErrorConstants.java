@@ -1,4 +1,4 @@
-package tfg.books.back.GrpahQLErrors;
+package tfg.books.back.graphQLErrors;
 
 import graphql.ErrorClassification;
 

@@ -389,6 +389,8 @@ public class ListService {
                     batch.set(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
                             .collection(AppFirebaseConstants.BOOKS_USER_LIST_RELATION_COLLECTION)
                             .document(bookId).collection(AppFirebaseConstants.INSIDE_LISTS_BOOK_COLLECTION).document(listId), new HashMap<String, String>());
+                }else{
+                    return false;
                 }
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
@@ -419,6 +421,8 @@ public class ListService {
                     batch.delete(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
                             .collection(AppFirebaseConstants.BOOKS_USER_LIST_RELATION_COLLECTION)
                             .document(bookId).collection(AppFirebaseConstants.INSIDE_LISTS_BOOK_COLLECTION).document(listId));
+                }else{
+                    return false;
                 }
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
@@ -530,7 +534,7 @@ public class ListService {
 
     public String getImageForDefaultList(String userId, String listId) {
         String image = "";
-        QuerySnapshot listOfBooks = null;
+        QuerySnapshot listOfBooks;
         if (userId.isBlank()) {
             userId = authenticatedUserIdProvider.getUserId();
         }
@@ -567,7 +571,7 @@ public class ListService {
 
     public String getImageForList(String listId) {
         String image = "";
-        QuerySnapshot listOfBooks = null;
+        QuerySnapshot listOfBooks;
         try {
             listOfBooks = (firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(listId)
                     .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy(

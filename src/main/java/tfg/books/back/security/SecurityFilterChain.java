@@ -21,12 +21,10 @@ public class SecurityFilterChain {
 public DefaultSecurityFilterChain configure(HttpSecurity http) throws Exception {
     http
       .csrf(csrf -> csrf.ignoringRequestMatchers("/graphql"))
-      .authorizeHttpRequests(authManager -> {
-        authManager
-          .requestMatchers("/graphql")
-          .permitAll()
-          .anyRequest().denyAll();
-      });
+      .authorizeHttpRequests(authManager -> authManager
+        .requestMatchers("/graphql")
+        .permitAll()
+        .anyRequest().denyAll());
 
       http.addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
