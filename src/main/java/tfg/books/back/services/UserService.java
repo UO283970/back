@@ -182,7 +182,6 @@ public class UserService {
 
     public boolean delete() throws FirebaseAuthException {
         String userId = authenticatedUserIdProvider.getUserId();
-        firebaseAuth.deleteUser(userId);
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
 
@@ -197,17 +196,15 @@ public class UserService {
                         firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).listDocuments()) {
                     firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(following.getId()).collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(userId).delete();
                 }
-                for (DocumentReference activity :
-                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).collection(AppFirebaseConstants.USERS_ACTIVITIES_COLLECTION).listDocuments()) {
-                    //TODO: Lista de actividades firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION)
-                    // .document(activity).delete();
+                for (QueryDocumentSnapshot activity :
+                        firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo("userId",userId).get().get()) {
+                        firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).document(activity.getId()).delete();
                 }
-                for (DocumentReference list :
-                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).collection(AppFirebaseConstants.USERS_LISTS_COLLECTION).listDocuments()) {
+                for (QueryDocumentSnapshot list :
+                        firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo("listUserId",userId).get().get()) {
                     listService.deleteList(list.getId());
                 }
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).delete();
-                firebaseAuth.revokeRefreshTokens(userId);
                 firebaseAuth.deleteUser(userId);
                 return true;
             } else {

@@ -1,6 +1,7 @@
 package tfg.books.back.services;
 
 import com.google.api.core.ApiFuture;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.firebase.database.annotations.NotNull;
 import com.google.gson.Gson;
@@ -131,7 +132,7 @@ public class ListService {
 
                         QuerySnapshot listOfBooks =
                                 firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(id)
-                                        .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).get().get();
+                                        .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy("timestamp").get().get();
 
                         for (QueryDocumentSnapshot book : listOfBooks) {
                             String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
@@ -231,7 +232,7 @@ public class ListService {
                 List<Book> listOfBooksOfList = new ArrayList<>();
                 QuerySnapshot listOfBooks = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
                         .collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).document(listOfDocuments.getId())
-                        .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).get().get();
+                        .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy("timestamp").get().get();
 
                 for (QueryDocumentSnapshot book : listOfBooks) {
                     String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
@@ -328,7 +329,7 @@ public class ListService {
                 DocumentReference bookList =
                         firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
                                 collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).document(listId);
-                bookList.collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).document(bookId).set(new HashMap<String, String>());
+                bookList.collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).document(bookId).set(Collections.singletonMap("timestamp", Timestamp.now()));
 
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
                         .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
@@ -383,7 +384,7 @@ public class ListService {
 
                     batch.set(firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(listId)
                                     .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).document(bookId),
-                            new HashMap<String, String>());
+                            Collections.singletonMap("timestamp", Timestamp.now()));
 
                     batch.set(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
                             .collection(AppFirebaseConstants.BOOKS_USER_LIST_RELATION_COLLECTION)
@@ -530,7 +531,7 @@ public class ListService {
     public String getImageForDefaultList(String userId, String listId) {
         String image = "";
         QuerySnapshot listOfBooks = null;
-        if(userId.isBlank()){
+        if (userId.isBlank()) {
             userId = authenticatedUserIdProvider.getUserId();
         }
 
@@ -542,7 +543,7 @@ public class ListService {
             throw new RuntimeException(e);
         }
 
-        if(listOfBooks != null){
+        if (listOfBooks != null) {
             String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
 
             String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
