@@ -28,6 +28,7 @@ type Query{
 
     #Book queries
     searchBooks(userQuery: String!): [Book!]!
+    nextPageBooks(userQuery: String!, page: Int!): [Book!]!
 }
 
 type Mutation{

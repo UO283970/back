@@ -39,7 +39,7 @@ public class BookAPIService {
         List<Book> resultOfQueryBooks = new ArrayList<>();
 
         String url = "https://www.googleapis.com/books/v1/volumes?q=intitle:{userQuery}&printType=books&orderBy" +
-                "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M";
+                "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M&startIndex=0&maxResults=10";
 
         String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery),
                 HttpMethod.GET, null, String.class).getBody();
@@ -59,8 +59,8 @@ public class BookAPIService {
             try {
                 bookDocumentRelation =
                         firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
-                        .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
-                        .document(bookForSearch.getBookId()).get().get();
+                                .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
+                                .document(bookForSearch.getBookId()).get().get();
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
@@ -70,7 +70,54 @@ public class BookAPIService {
                         AppFirebaseConstants.DEFAULT_LISTS.get(
                                 Integer.parseInt(Objects.requireNonNull(bookDocumentRelation.getString("listId")))
                         )));
-            }else{
+            } else {
+                bookForSearch.setReadingState(Book.ReadingState.NOT_IN_LIST);
+            }
+
+            resultOfQueryBooks.add(bookForSearch);
+        }
+
+        return resultOfQueryBooks;
+    }
+
+    public List<Book> nextPageBooks(@NotNull String userQuery, @NotNull int page) {
+        List<Book> resultOfQueryBooks = new ArrayList<>();
+
+        String url = "https://www.googleapis.com/books/v1/volumes?q=intitle:{userQuery}&printType=books&orderBy" +
+                "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M&startIndex={page}&maxResults=10";
+
+        String bookFromApi =
+                restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery).replace("{page}",
+                                Integer.toString(page * 10)),
+                HttpMethod.GET, null, String.class).getBody();
+
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(Book.class, new BookCustomSerializer());
+        Gson gson = builder.create();
+
+        assert bookFromApi != null;
+        List<JsonElement> resultAsJSON =
+                JsonParser.parseString(bookFromApi).getAsJsonObject().get("items").getAsJsonArray().asList();
+
+        for (JsonElement bookDocs : resultAsJSON) {
+            Book bookForSearch = gson.fromJson(bookDocs, Book.class);
+
+            DocumentSnapshot bookDocumentRelation = null;
+            try {
+                bookDocumentRelation =
+                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
+                                .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
+                                .document(bookForSearch.getBookId()).get().get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (bookDocumentRelation.exists()) {
+                bookForSearch.setReadingState(Book.ReadingState.valueOf(
+                        AppFirebaseConstants.DEFAULT_LISTS.get(
+                                Integer.parseInt(Objects.requireNonNull(bookDocumentRelation.getString("listId")))
+                        )));
+            } else {
                 bookForSearch.setReadingState(Book.ReadingState.NOT_IN_LIST);
             }
 

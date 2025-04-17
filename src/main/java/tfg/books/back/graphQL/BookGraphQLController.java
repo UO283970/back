@@ -21,4 +21,9 @@ public class BookGraphQLController {
     public List<Book> searchBooks(@Argument("userQuery") String userQuery){
         return bookAPIService.searchBooks(userQuery);
     }
+
+    @QueryMapping
+    public List<Book> nextPageBooks(@Argument("userQuery") String userQuery,@Argument("page") int page){
+        return bookAPIService.nextPageBooks(userQuery, page);
+    }
 }
