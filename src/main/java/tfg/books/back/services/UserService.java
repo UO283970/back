@@ -1,6 +1,7 @@
 package tfg.books.back.services;
 
 import com.google.api.core.ApiFuture;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.auth.FirebaseAuth;
@@ -17,6 +18,8 @@ import tfg.books.back.firebase.FirebaseAuthClient;
 import tfg.books.back.model.books.Book;
 import tfg.books.back.model.list.BookList;
 import tfg.books.back.model.list.DefaultListForFirebase;
+import tfg.books.back.model.notifications.Notification;
+import tfg.books.back.model.notifications.NotificationsTypes;
 import tfg.books.back.model.userActivity.UserActivity;
 import tfg.books.back.model.userModels.*;
 import tfg.books.back.model.userModels.User.UserFollowState;
@@ -31,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserService {
@@ -45,7 +49,8 @@ public class UserService {
     private final ListService listService;
 
     public UserService(FirebaseAuth firebaseAuth, AuthenticatedUserIdProvider authenticatedUserIdProvider,
-                       Firestore firestore, FirebaseAuthClient firebaseAuthClient, StorageClient storage, ListService listService) {
+                       Firestore firestore, FirebaseAuthClient firebaseAuthClient, StorageClient storage,
+                       ListService listService) {
         this.firebaseAuthClient = firebaseAuthClient;
         this.firebaseAuth = firebaseAuth;
         this.authenticatedUserIdProvider = authenticatedUserIdProvider;
@@ -137,7 +142,7 @@ public class UserService {
     }
 
     public String update(@NotNull String userAlias, @NotNull String userName, @NotNull String profilePictureURL,
-                          @NotNull String description, @NotNull UserPrivacy privacyLevel) {
+                         @NotNull String description, @NotNull UserPrivacy privacyLevel) {
         String userId = authenticatedUserIdProvider.getUserId();
         DocumentReference document = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
 
@@ -175,7 +180,7 @@ public class UserService {
         String imageUrl = String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media",
                 bucket.getName(), URLEncoder.encode(imageName, StandardCharsets.UTF_8));
 
-        document.update("profilePictureURL",imageUrl);
+        document.update("profilePictureURL", imageUrl);
 
         return imageUrl;
     }
@@ -197,11 +202,12 @@ public class UserService {
                     firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(following.getId()).collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(userId).delete();
                 }
                 for (QueryDocumentSnapshot activity :
-                        firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo("userId",userId).get().get()) {
-                        firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).document(activity.getId()).delete();
+                        firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo("userId",
+                                userId).get().get()) {
+                    firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).document(activity.getId()).delete();
                 }
                 for (QueryDocumentSnapshot list :
-                        firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo("listUserId",userId).get().get()) {
+                        firestore.collection(AppFirebaseConstants.LIST_COLLECTION).whereEqualTo("listUserId", userId).get().get()) {
                     listService.deleteList(list.getId());
                 }
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).delete();
@@ -213,6 +219,25 @@ public class UserService {
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public Boolean deleteNotification(@NotNull String notificationId){
+        String userId = authenticatedUserIdProvider.getUserId();
+        DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
+        ApiFuture<DocumentSnapshot> future = docRef.get();
+
+        try {
+            DocumentSnapshot document = future.get();
+            if (document.exists()) {
+                docRef.collection(AppFirebaseConstants.USERS_NOTIFICATIONS_COLLECTION).document(notificationId).delete();
+            } else {
+                return false;
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return true;
     }
 
     public String logout() throws FirebaseAuthException {
@@ -239,13 +264,46 @@ public class UserService {
                 } else {
                     firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(friendId)
                             .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(userId).set(new HashMap<String, String>());
+                    sendNotification(friendId, NotificationsTypes.FOLLOWED, userId);
+
                     firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
                             .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).document(friendId).set(new HashMap<String, String>());
+                    sendNotification(userId, NotificationsTypes.FOLLOW, friendId);
+
                     return UserFollowState.FOLLOWING;
                 }
             } else {
                 return UserFollowState.NOT_FOLLOW;
             }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void sendNotification(String toUserId, NotificationsTypes followed, String fromUserId) {
+        String notificationId = toUserId + "|" + fromUserId + "|" + followed.toString();
+
+        try {
+            DocumentReference notificationExist =
+                    firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(toUserId)
+                    .collection(AppFirebaseConstants.USERS_NOTIFICATIONS_COLLECTION).document(notificationId);
+
+            if (notificationExist.get().get().exists()) {
+                Timestamp timestamp = notificationExist.get().get().getTimestamp("timeStamp");
+                Timestamp timeNow = Timestamp.now();
+
+                assert timestamp != null;
+                if (timeNow.toDate().getTime() - timestamp.toDate().getTime() > TimeUnit.HOURS.toMillis(1)) {
+                    notificationExist.update("timeStamp", timeNow);
+                }
+            } else {
+                Map<String, Object> notificationMap = Map.of("notificationType", followed.toString(), "timeStamp",
+                        Timestamp.now(), "userId", fromUserId);
+
+                firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(toUserId)
+                        .collection(AppFirebaseConstants.USERS_NOTIFICATIONS_COLLECTION).document(notificationId).set(notificationMap);
+            }
+
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -288,12 +346,17 @@ public class UserService {
             DocumentSnapshot document = future.get();
             DocumentSnapshot document2 = future2.get();
             if (document.exists() && document2.exists()) {
-                firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(friendId)
-                        .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).document(userId).delete();
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
-                        .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).document(friendId).set(new HashMap<String, String>());
+                        .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).document(friendId).delete();
+
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(friendId)
-                        .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(userId).set(new HashMap<String, String>());
+                        .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).document(userId).set(new HashMap<String, String>());
+                sendNotification(friendId, NotificationsTypes.FOLLOW, userId);
+
+                firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                        .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(friendId).set(new HashMap<String, String>());
+                sendNotification(userId, NotificationsTypes.FOLLOWED, friendId);
+
             } else {
                 return false;
             }
@@ -314,8 +377,8 @@ public class UserService {
             DocumentSnapshot document = future.get();
             DocumentSnapshot document2 = future2.get();
             if (document.exists() && document2.exists()) {
-                firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(friendId)
-                        .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).document(userId).delete();
+                firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                        .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).document(friendId).delete();
             } else {
                 return false;
             }
@@ -508,9 +571,9 @@ public class UserService {
                             .document(authenticatedUserIdProvider.getUserId())
                             .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).document(followerUserId.getId()).get().get().exists()) {
                         actualUser.setUserFollowState(UserFollowState.FOLLOWING);
-                    }else if(firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
+                    } else if (firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
                             .document(followerUserId.getId())
-                            .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).document(authenticatedUserIdProvider.getUserId()).get().get().exists()){
+                            .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).document(authenticatedUserIdProvider.getUserId()).get().get().exists()) {
                         actualUser.setUserFollowState(UserFollowState.REQUESTED);
                     }
 
@@ -541,7 +604,7 @@ public class UserService {
             if (document.exists()) {
                 QuerySnapshot userFollowActivities =
                         firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo("userId",
-                        userId).whereEqualTo("userActivityType", UserActivity.UserActivityType.REVIEW).get().get();
+                                userId).whereEqualTo("userActivityType", UserActivity.UserActivityType.REVIEW).get().get();
 
                 for (QueryDocumentSnapshot userActivity : userFollowActivities) {
                     UserActivity newUserActivity = userActivity.toObject(UserActivity.class);
@@ -567,4 +630,76 @@ public class UserService {
     }
 
 
+    public List<UserForSearch> getUserFollowRequest() {
+        String userId = authenticatedUserIdProvider.getUserId();
+        List<UserForSearch> userRequests = new ArrayList<>();
+
+        Iterable<DocumentReference> userRequest =
+                firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                        .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).listDocuments();
+
+        for (DocumentReference documentReference : userRequest) {
+            try {
+                User user = firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
+                        .document(documentReference.getId()).get().get().toObject(User.class);
+
+                assert user != null;
+
+                userRequests.add(new UserForSearch(documentReference.getId(), user.getUserName(),
+                        user.getUserAlias(), user.getProfilePictureURL()));
+
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return userRequests;
+    }
+
+    public List<Notification> getUserNotifications(@NotNull String timeStamp) {
+        String userId = authenticatedUserIdProvider.getUserId();
+        List<Notification> userNotifications = new ArrayList<>();
+
+        try {
+            Query baseQuery = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                    .collection(AppFirebaseConstants.USERS_NOTIFICATIONS_COLLECTION).orderBy("timeStamp",
+                            Query.Direction.DESCENDING).limit(20);
+
+            if (!timeStamp.isBlank()) {
+                baseQuery = baseQuery.startAfter(Timestamp.parseTimestamp(timeStamp));
+            }
+
+            List<QueryDocumentSnapshot> userNotification = baseQuery.get().get().getDocuments();
+
+            for (QueryDocumentSnapshot documentReference : userNotification) {
+                String notificationUserId = documentReference.getString("userId");
+
+                assert notificationUserId != null;
+                User user = firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
+                        .document(notificationUserId).get().get().toObject(User.class);
+
+                assert user != null;
+
+                if (firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
+                        .document(authenticatedUserIdProvider.getUserId())
+                        .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).document(notificationUserId).get().get().exists()) {
+                    user.setUserFollowState(UserFollowState.FOLLOWING);
+                } else if (firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
+                        .document(notificationUserId)
+                        .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).document(authenticatedUserIdProvider.getUserId()).get().get().exists()) {
+                    user.setUserFollowState(UserFollowState.REQUESTED);
+                }
+
+                userNotifications.add(new Notification(documentReference.getId(), new UserForProfile(userId,
+                        user.getUserName(), user.getUserAlias(), user.getProfilePictureURL(),
+                        user.getUserFollowState()),
+                        NotificationsTypes.valueOf(documentReference.getString("notificationType")),
+                        Objects.requireNonNull(documentReference.getTimestamp("timeStamp")).toString()));
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        return userNotifications;
+    }
 }

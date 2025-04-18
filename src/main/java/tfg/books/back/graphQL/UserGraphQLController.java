@@ -7,6 +7,7 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import tfg.books.back.firebase.AppFirebaseConstants;
+import tfg.books.back.model.notifications.Notification;
 import tfg.books.back.model.userActivity.UserActivity;
 import tfg.books.back.model.userModels.*;
 import tfg.books.back.model.userModels.User.UserFollowState;
@@ -75,6 +76,16 @@ public class UserGraphQLController {
         return userService.getUsersReviews(userId);
     }
 
+    @QueryMapping
+    public List<UserForSearch> getUserFollowRequest() {
+        return userService.getUserFollowRequest();
+    }
+
+    @QueryMapping
+    public List<Notification> getUserNotifications(@Argument("timeStamp") String timeStamp) {
+        return userService.getUserNotifications(timeStamp);
+    }
+
     @MutationMapping
     public RegisterUser createUser(@Argument("email") String email, @Argument("password") String password,
                                    @Argument("repeatedPassword") String repeatedPassword, @Argument("userAlias") String userAlias,
@@ -119,5 +130,10 @@ public class UserGraphQLController {
     @MutationMapping
     public Boolean deleteFromFollower(@Argument("friendId") String friendId){
         return userService.deleteFromFollower(friendId);
+    }
+
+    @MutationMapping
+    public Boolean deleteNotification(@Argument("notificationId") String notificationId){
+        return userService.deleteNotification(notificationId);
     }
 }

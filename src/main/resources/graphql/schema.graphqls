@@ -10,6 +10,8 @@ type Query{
     getFollowersOfUser(userId: String!): [User!]!
     getFollowingListUser(userId: String!): [User!]!
     getUsersReviews(userId: String!): [UserActivity!]!
+    getUserFollowRequest: [User!]!
+    getUserNotifications(timeStamp: String!): [Notification!]!
 
     #Lists queries
     getAllListInfo(listId: String!): BookList
@@ -36,6 +38,7 @@ type Mutation{
     createUser(email: String!, password: String!, repeatedPassword: String!, userAlias: String!, userName: String!, profilePictureURL: String!): UserRegister!
     updateUser(userAlias: String!, userName: String!, profilePictureURL: String!, description: String!, privacyLevel: UserPrivacy!): String!
     deleteUser: Boolean!
+    deleteNotification(notificationId: String!): Boolean!
 
     #Follow mutations
     followUser(friendId: String!): UserFollowState!
@@ -175,4 +178,16 @@ type UserActivity{
 enum UserActivityType{
     REVIEW,
     RATING
+}
+
+type Notification{
+    notificationId: String!
+    user: User!
+    notificationType: NotificationType!
+    timeStamp: String!
+}
+
+enum NotificationType {
+   FOLLOW,
+    FOLLOWED
 }

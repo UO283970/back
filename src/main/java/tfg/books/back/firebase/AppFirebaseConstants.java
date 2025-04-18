@@ -7,7 +7,8 @@ public class AppFirebaseConstants{
     public static final String USERS_FOLLOWERS_COLLECTION = "followersUsers";
     public static final String USERS_FOLLOWING_COLLECTION = "followingUsers";
     public static final String USERS_DEFAULT_LISTS_COLLECTION = "userDefaultLists";
-    public static final String USERS_REQUESTS_COLLECTION = "followRequestLists";
+    public static final String USERS_REQUESTS_COLLECTION = "followRequestList";
+    public static final String USERS_NOTIFICATIONS_COLLECTION = "notifications";
     public static final String LIST_COLLECTION = "lists";
     public static final String INSIDE_BOOKS_LIST_COLLECTION = "books";
     public static final String BOOKS_DEFAULT_LIST_RELATION_COLLECTION = "booksToDefaultList";
