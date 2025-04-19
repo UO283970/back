@@ -73,6 +73,39 @@ public class UserActivityService {
         return userFollowActivitiesForApp;
     }
 
+    public List<UserActivity> getAllReviewsForBook(String bookId) {
+        List<UserActivity> userFollowActivitiesForApp = new ArrayList<>();
+
+        try {
+            QuerySnapshot userFollowActivities =
+                    firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION)
+                            .whereEqualTo("bookId", bookId).whereEqualTo("userActivityType",
+                                    UserActivity.UserActivityType.REVIEW.toString()).orderBy("timestamp",
+                                    Query.Direction.DESCENDING).get().get();
+
+            for (QueryDocumentSnapshot userActivity : userFollowActivities) {
+                UserActivity newUserActivity = userActivity.toObject(UserActivity.class);
+                newUserActivity.setId(userActivity.getId());
+
+                newUserActivity.setLocalDateTime(LocalDateTime.ofInstant(newUserActivity.getTimestamp().toDate().toInstant(), ZoneId.systemDefault()).toString());
+
+                newUserActivity.setUser(userService.getUserMinimalInfo(newUserActivity.getUserId()));
+
+                Book book = new Book();
+                book.setBookId(newUserActivity.getBookId());
+                newUserActivity.setBook(book);
+
+                userFollowActivitiesForApp.add(newUserActivity);
+
+            }
+
+
+            return userFollowActivitiesForApp;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     public Boolean addActivity(@NotNull String activityText, @NotNull int score,
                                @NotNull String bookId, @NotNull UserActivity.UserActivityType userActivityType) {

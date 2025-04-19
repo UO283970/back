@@ -27,6 +27,7 @@ type Query{
 
     #User activity queries
     getAllFollowedActivity: [UserActivity!]!
+    getAllReviewsForBook(bookId: String!): [UserActivity!]!
 
     #Book queries
     searchBooks(userQuery: String!): [Book!]!

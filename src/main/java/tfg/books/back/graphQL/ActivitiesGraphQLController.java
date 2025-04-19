@@ -24,6 +24,11 @@ public class ActivitiesGraphQLController {
         return userActivityService.getAllFollowedActivity();
     }
 
+    @QueryMapping
+    public List<UserActivity> getAllReviewsForBook(@Argument("bookId") String bookId) {
+        return userActivityService.getAllReviewsForBook(bookId);
+    }
+
     @MutationMapping
     public Boolean addActivity(@Argument("activityText") String activityText, @Argument("score") int score, @Argument(
             "bookId") String bookId, @Argument("userActivityType")UserActivityType userActivityType) {

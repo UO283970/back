@@ -21,7 +21,7 @@ public class BookCustomSerializer implements JsonDeserializer<Book> {
 
         String publishYear = "";
         if (bookInfo.getAsJsonObject().get("publishedDate") != null) {
-            publishYear = bookInfo.getAsJsonObject().get("publishedDate").getAsString().split("-")[0];
+            publishYear = bookInfo.getAsJsonObject().get("publishedDate").getAsString().split("-")[0].replaceAll("\\D", " ").trim();
         }
 
         String author = "";
@@ -48,7 +48,7 @@ public class BookCustomSerializer implements JsonDeserializer<Book> {
         List<String> subjects = new ArrayList<>();
         if (bookInfo.getAsJsonObject().get("categories") != null) {
             for (JsonElement object : bookInfo.getAsJsonObject().get("categories").getAsJsonArray().asList()) {
-                subjects.add(object.getAsString());
+                subjects = List.of(object.toString().replace("\"","").split(","));
             }
         }
 

@@ -20,7 +20,7 @@ public class Book {
     @NotNull
     private final List<String> subjects;
     @NotNull
-    private final String details;
+    private final String description;
     @NotNull
     private final String coverImageURL;
     @NotNull
@@ -41,7 +41,7 @@ public class Book {
         this.meanScore = meanScore;
         this.userScore = userScore;
         this.subjects = subjects;
-        this.details = details;
+        this.description = details;
         this.readingState = readingState;
         this.coverImageURL = imageUrl;
         this.publishYear = publishYear;
@@ -61,7 +61,7 @@ public class Book {
         this.meanScore = 0.0;
         this.userScore = 0;
         this.subjects = new ArrayList<>();
-        this.details = "";
+        this.description = "";
         this.readingState = ReadingState.NOT_IN_LIST;
         this.coverImageURL = "";
     }
@@ -96,8 +96,8 @@ public class Book {
         return this.subjects;
     }
 
-    public String getDetails() {
-        return this.details;
+    public String getDescription() {
+        return this.description;
     }
 
     public ReadingState getReadingState() {
@@ -118,6 +118,10 @@ public class Book {
 
     public void setBookId(String bookId) {
         this.bookId = bookId;
+    }
+
+    public String getPublishYear() {
+        return publishYear;
     }
 
     public enum ReadingState {

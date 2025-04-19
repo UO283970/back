@@ -84,7 +84,7 @@ public class BookAPIService {
         List<Book> resultOfQueryBooks = new ArrayList<>();
 
         String url = "https://www.googleapis.com/books/v1/volumes?q=intitle:{userQuery}&printType=books&orderBy" +
-                "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M&startIndex={page}&maxResults=10";
+                "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M&startIndex={page}&maxResults=15";
 
         String bookFromApi =
                 restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery).replace("{page}",

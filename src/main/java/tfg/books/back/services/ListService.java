@@ -20,6 +20,7 @@ import tfg.books.back.model.books.Book.ReadingState;
 import tfg.books.back.model.books.BookCustomSerializer;
 import tfg.books.back.model.list.BookList;
 import tfg.books.back.model.list.ListForFirebase;
+import tfg.books.back.model.list.ListForFirebaseWithTimestamp;
 import tfg.books.back.model.list.ListWithId;
 import tfg.books.back.model.userModels.User;
 
@@ -52,7 +53,7 @@ public class ListService {
             if (document.exists()) {
                 if (userId.equals(authenticatedUserIdProvider.getUserId())) {
                     QuerySnapshot userList = firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
-                            .whereEqualTo("listUserId", userId).get().get();
+                            .whereEqualTo("listUserId", userId).orderBy("timestamp", Query.Direction.DESCENDING).get().get();
 
                     for (QueryDocumentSnapshot query : userList) {
                         BookList list = query.toObject(BookList.class);
@@ -285,7 +286,7 @@ public class ListService {
             throw new RuntimeException(e);
         }
 
-        ListForFirebase generatedList = new ListForFirebase(listName, description, bookListprivacy, userId);
+        ListForFirebaseWithTimestamp generatedList = new ListForFirebaseWithTimestamp(listName, description, bookListprivacy, userId, Timestamp.now());
         firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(generatedID).set(generatedList);
 
         return generatedID;
