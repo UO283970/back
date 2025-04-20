@@ -30,8 +30,8 @@ type Query{
     getAllReviewsForBook(bookId: String!): [UserActivity!]!
 
     #Book queries
-    searchBooks(userQuery: String!): [Book!]!
-    nextPageBooks(userQuery: String!, page: Int!): [Book!]!
+    searchBooks(userQuery: String!, searchFor: String!, subject: String!): [Book!]!
+    nextPageBooks(userQuery: String!, page: Int!, searchFor: String!, subject: String!): [Book!]!
 }
 
 type Mutation{

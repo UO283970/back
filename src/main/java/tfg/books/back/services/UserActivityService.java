@@ -58,7 +58,9 @@ public class UserActivityService {
 
                     newUserActivity.setUser(userService.getUserMinimalInfo(newUserActivity.getUserId()));
 
-                    newUserActivity.setBook(new Book());
+                    Book book = new Book();
+                    book.setBookId(newUserActivity.getBookId());
+                    newUserActivity.setBook(book);
 
                     userFollowActivitiesForApp.add(newUserActivity);
 

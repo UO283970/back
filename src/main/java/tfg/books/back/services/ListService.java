@@ -133,7 +133,8 @@ public class ListService {
 
                         QuerySnapshot listOfBooks =
                                 firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(id)
-                                        .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy("timestamp").get().get();
+                                        .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy(
+                                                "timestamp").get().get();
 
                         for (QueryDocumentSnapshot book : listOfBooks) {
                             String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
@@ -264,8 +265,9 @@ public class ListService {
     public List<ListWithId> searchLists(@NotNull String userQuery) {
         try {
             return firestore.collection(AppFirebaseConstants.LIST_COLLECTION)
-                    .whereGreaterThanOrEqualTo("userName", userQuery)
-                    .whereLessThan("userName", userQuery + '\uf8ff').get().get().toObjects(ListWithId.class);
+                    .whereGreaterThanOrEqualTo("listName", userQuery)
+                    .whereLessThan("listName", userQuery + '\uf8ff').whereEqualTo("bookListPrivacy",
+                            BookList.BookListPrivacy.PUBLIC.toString()).get().get().toObjects(ListWithId.class);
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -286,7 +288,8 @@ public class ListService {
             throw new RuntimeException(e);
         }
 
-        ListForFirebaseWithTimestamp generatedList = new ListForFirebaseWithTimestamp(listName, description, bookListprivacy, userId, Timestamp.now());
+        ListForFirebaseWithTimestamp generatedList = new ListForFirebaseWithTimestamp(listName, description,
+                bookListprivacy, userId, Timestamp.now());
         firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(generatedID).set(generatedList);
 
         return generatedID;
@@ -390,7 +393,7 @@ public class ListService {
                     batch.set(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
                             .collection(AppFirebaseConstants.BOOKS_USER_LIST_RELATION_COLLECTION)
                             .document(bookId).collection(AppFirebaseConstants.INSIDE_LISTS_BOOK_COLLECTION).document(listId), new HashMap<String, String>());
-                }else{
+                } else {
                     return false;
                 }
             } catch (InterruptedException | ExecutionException e) {
@@ -422,7 +425,7 @@ public class ListService {
                     batch.delete(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
                             .collection(AppFirebaseConstants.BOOKS_USER_LIST_RELATION_COLLECTION)
                             .document(bookId).collection(AppFirebaseConstants.INSIDE_LISTS_BOOK_COLLECTION).document(listId));
-                }else{
+                } else {
                     return false;
                 }
             } catch (InterruptedException | ExecutionException e) {

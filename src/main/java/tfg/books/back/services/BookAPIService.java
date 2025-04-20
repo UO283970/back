@@ -35,13 +35,14 @@ public class BookAPIService {
     }
 
 
-    public List<Book> searchBooks(@NotNull String userQuery) {
+    public List<Book> searchBooks(@NotNull String userQuery,@NotNull String searchFor,@NotNull String subject) {
         List<Book> resultOfQueryBooks = new ArrayList<>();
 
-        String url = "https://www.googleapis.com/books/v1/volumes?q=intitle:{userQuery}&printType=books&orderBy" +
+        String url = "https://www.googleapis.com/books/v1/volumes?q=" + searchFor + "{userQuery}{subject}&printType=books&orderBy" +
                 "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M&startIndex=0&maxResults=10";
 
-        String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery),
+        String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery)
+                        .replace("{subject}", subject),
                 HttpMethod.GET, null, String.class).getBody();
 
         GsonBuilder builder = new GsonBuilder();
@@ -80,15 +81,15 @@ public class BookAPIService {
         return resultOfQueryBooks;
     }
 
-    public List<Book> nextPageBooks(@NotNull String userQuery, @NotNull int page) {
+    public List<Book> nextPageBooks(@NotNull String userQuery, @NotNull int page,@NotNull String searchFor,@NotNull String subject) {
         List<Book> resultOfQueryBooks = new ArrayList<>();
 
-        String url = "https://www.googleapis.com/books/v1/volumes?q=intitle:{userQuery}&printType=books&orderBy" +
+        String url = "https://www.googleapis.com/books/v1/volumes?q=" + searchFor + "{userQuery}{subject}&printType=books&orderBy" +
                 "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M&startIndex={page}&maxResults=15";
 
         String bookFromApi =
                 restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery).replace("{page}",
-                                Integer.toString(page * 10)),
+                                Integer.toString(page * 10)).replace("{subject}", subject),
                 HttpMethod.GET, null, String.class).getBody();
 
         GsonBuilder builder = new GsonBuilder();

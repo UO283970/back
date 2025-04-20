@@ -13,17 +13,19 @@ public class BookGraphQLController {
 
     private final BookAPIService bookAPIService;
 
-    public BookGraphQLController(BookAPIService bookAPIService){
+    public BookGraphQLController(BookAPIService bookAPIService) {
         this.bookAPIService = bookAPIService;
     }
 
     @QueryMapping
-    public List<Book> searchBooks(@Argument("userQuery") String userQuery){
-        return bookAPIService.searchBooks(userQuery);
+    public List<Book> searchBooks(@Argument("userQuery") String userQuery,
+                                  @Argument("searchFor") String searchFor, @Argument("subject") String subject) {
+        return bookAPIService.searchBooks(userQuery, searchFor, subject);
     }
 
     @QueryMapping
-    public List<Book> nextPageBooks(@Argument("userQuery") String userQuery,@Argument("page") int page){
-        return bookAPIService.nextPageBooks(userQuery, page);
+    public List<Book> nextPageBooks(@Argument("userQuery") String userQuery, @Argument("page") int page, @Argument(
+            "searchFor") String searchFor, @Argument("subject") String subject) {
+        return bookAPIService.nextPageBooks(userQuery, page, searchFor, subject);
     }
 }
