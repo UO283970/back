@@ -1,6 +1,7 @@
 package tfg.books.back.model.userModels;
 
 import com.google.api.client.util.Value;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -14,14 +15,16 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
+@Component
 public class PassDecryption {
-    @Value("${app.secret-key}")
-    private static final String SECRET_KEY = "";
     private static final String INIT_VECTOR = "RandomInitVector";
 
-    public static String decrypt(String encrypted) {
-            IvParameterSpec ivParameterSpec = new IvParameterSpec(INIT_VECTOR.getBytes(StandardCharsets.UTF_8));
-            SecretKeySpec secretKeySpec = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), "AES");
+    @Value("${app.secret-key}")
+    private String secretKey;
+
+    public String decrypt(String encrypted) {
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(INIT_VECTOR.getBytes(StandardCharsets.UTF_8));
+        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "AES");
 
         Cipher cipher = null;
         try {

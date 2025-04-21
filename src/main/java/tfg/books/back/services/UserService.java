@@ -60,7 +60,7 @@ public class UserService {
     }
 
     public LoginUser login(@NotNull String email, @NotNull String password) {
-        String passDecrypted = PassDecryption.decrypt(password);
+        String passDecrypted = new PassDecryption().decrypt(password);
 
         List<UserErrorLogin> userErrorLogin = UserChecks.loginCheck(email, passDecrypted);
         if (!userErrorLogin.isEmpty()) {
@@ -92,8 +92,8 @@ public class UserService {
 
     public RegisterUser checkUserEmailAndPass(@NotNull String email, @NotNull String password, @NotNull String repeatedPassword){
 
-        String passDecrypted = PassDecryption.decrypt(password);
-        String repeatedPassDecrypted = PassDecryption.decrypt(repeatedPassword);
+        String passDecrypted = new PassDecryption().decrypt(password);
+        String repeatedPassDecrypted = new PassDecryption().decrypt(repeatedPassword);
 
         List<UserErrorRegister> userErrorRegisterList = UserChecks.registerUserAndPassCheck(email, passDecrypted,
                 repeatedPassDecrypted);
@@ -121,8 +121,8 @@ public class UserService {
                                @NotNull String userAlias, @NotNull String userName,
                                @NotNull String profilePictureURL) throws FirebaseAuthException {
 
-        String passDecrypted = PassDecryption.decrypt(password);
-        String repeatedPassDecrypted = PassDecryption.decrypt(repeatedPassword);
+        String passDecrypted = new PassDecryption().decrypt(password);
+        String repeatedPassDecrypted = new PassDecryption().decrypt(repeatedPassword);
 
         CreateRequest request = new CreateRequest();
         request.setEmail(email);

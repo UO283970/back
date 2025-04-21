@@ -10,5 +10,8 @@ jobs:
       SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
       
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Read a variable
         run: echo "${{secrets.SECRET_PASS_DECRYPTION_KEY}}"
