@@ -5,3 +5,5 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
