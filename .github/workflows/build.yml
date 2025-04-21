@@ -5,9 +5,7 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -20,6 +18,11 @@ jobs:
       
       - name: Give permission to Gradle wrapper
         run: chmod +x gradlew
+
+      - name: Show environment variables
+        run: env
       
-      - name: Run with Gradle and secret
-        run: ./gradlew build --no-daemon
+      - name: Run with Gradle
+        run: |
+          export SECRET_PASS_DECRYPTION_KEY="${{ secrets.SECRET_PASS_DECRYPTION_KEY }}"
+          ./gradlew build --no-daemon
