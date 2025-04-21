@@ -3,7 +3,9 @@ name: Backend
 on: [push]
 
 jobs:
-  build:
+  example-job:
     runs-on: ubuntu-latest
-    env:
-      SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
+    steps:
+      - name: Retrieve secret
+        env:
+          super_secret: ${{ secrets.SUPERSECRET }}
