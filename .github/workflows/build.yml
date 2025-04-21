@@ -4,11 +4,11 @@ on: [push]
 
 jobs:
   build:
+    name: My Job
     runs-on: ubuntu-latest
-
+    env:
+      SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
+      
     steps:
-      - shell: bash
-        env:
-          SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
-        run:
-          echo "${{SECRET_PASS_DECRYPTION_KEY}}"
+      - name: Read a variable
+        run: echo "${{SECRET_PASS_DECRYPTION_KEY}}"
