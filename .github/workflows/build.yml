@@ -7,6 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Retrieve secret
+        uses: actions/cache@v4
         env:
           super_secret: ${{ secrets.SUPERSECRET }}
-      - uses: actions/setup-node@v4
