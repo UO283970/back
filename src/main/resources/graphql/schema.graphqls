@@ -36,6 +36,7 @@ type Query{
 
 type Mutation{
     #User mutations
+    checkUserEmailAndPass(email: String!, password: String!, repeatedPassword: String!): UserRegister!
     createUser(email: String!, password: String!, repeatedPassword: String!, userAlias: String!, userName: String!, profilePictureURL: String!): UserRegister!
     updateUser(userAlias: String!, userName: String!, profilePictureURL: String!, description: String!, privacyLevel: UserPrivacy!): String!
     deleteUser: Boolean!
@@ -189,6 +190,6 @@ type Notification{
 }
 
 enum NotificationType {
-   FOLLOW,
+    FOLLOW,
     FOLLOWED
 }

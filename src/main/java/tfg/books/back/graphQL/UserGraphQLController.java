@@ -87,6 +87,13 @@ public class UserGraphQLController {
     }
 
     @MutationMapping
+    public RegisterUser checkUserEmailAndPass(@Argument("email") String email, @Argument("password") String password,
+                                   @Argument("repeatedPassword") String repeatedPassword)
+            throws FirebaseAuthException {
+        return userService.checkUserEmailAndPass(email, password, repeatedPassword);
+    }
+
+    @MutationMapping
     public RegisterUser createUser(@Argument("email") String email, @Argument("password") String password,
                                    @Argument("repeatedPassword") String repeatedPassword, @Argument("userAlias") String userAlias,
                                    @Argument("userName") String userName, @Argument("profilePictureURL") String profilePictureURL)

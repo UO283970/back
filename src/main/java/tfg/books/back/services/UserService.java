@@ -88,6 +88,30 @@ public class UserService {
 
     }
 
+    public RegisterUser checkUserEmailAndPass(@NotNull String email, @NotNull String password, @NotNull String repeatedPassword) throws FirebaseAuthException {
+
+        List<UserErrorRegister> userErrorRegisterList = UserChecks.registerUserAndPassCheck(email, password,
+                repeatedPassword);
+        QuerySnapshot userEmailRepeat = null;
+        try {
+            userEmailRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
+                    "email", email).get().get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (!userEmailRepeat.isEmpty()) {
+            userErrorRegisterList.add(UserErrorRegister.ACCOUNT_EXISTS);
+        }
+
+        if (!userErrorRegisterList.isEmpty()) {
+            return new RegisterUser("", "", userErrorRegisterList);
+        }
+
+        return new RegisterUser("", "", List.of());
+
+    }
+
     public RegisterUser create(@NotNull String email, @NotNull String password, @NotNull String repeatedPassword,
                                @NotNull String userAlias, @NotNull String userName,
                                @NotNull String profilePictureURL) throws FirebaseAuthException {
@@ -100,9 +124,15 @@ public class UserService {
                     repeatedPassword, userAlias);
             QuerySnapshot userAliasRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
                     "userAlias", userAlias).get().get();
+            QuerySnapshot userEmailRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
+                    "userEmail", email).get().get();
 
             if (!userAliasRepeat.isEmpty()) {
                 userErrorRegisterList.add(UserErrorRegister.REPEATED_USER_ALIAS);
+            }
+
+            if (!userEmailRepeat.isEmpty()) {
+                userErrorRegisterList.add(UserErrorRegister.ACCOUNT_EXISTS);
             }
 
             if (!userErrorRegisterList.isEmpty()) {
@@ -114,8 +144,20 @@ public class UserService {
 
                 FirebaseSignInResponse response = firebaseAuthClient.login(email, password);
 
+                byte[] decodedBytes = Base64.getDecoder().decode(profilePictureURL);
+                String imageName = "images/" + userRecord.getUid() + ".jpg";
+
+                Bucket bucket = storage.bucket();
+
+                bucket.create(imageName, decodedBytes, "image/jpeg");
+
+                bucket.get(imageName);
+
+                String imageUrl = String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media",
+                        bucket.getName(), URLEncoder.encode(imageName, StandardCharsets.UTF_8));
+
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userRecord.getUid()).
-                        set(new BasicInfoUser(userRecord.getEmail(), userName, userAlias, profilePictureURL, "",
+                        set(new BasicInfoUser(userRecord.getEmail(), userName, userAlias, imageUrl, "",
                                 UserPrivacy.PUBLIC));
 
                 int count = 0;

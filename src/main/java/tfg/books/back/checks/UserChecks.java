@@ -49,6 +49,23 @@ public class UserChecks {
         return userErrorLogins;
     }
 
+    public static List<UserErrorRegister> registerUserAndPassCheck(String email, String password, String repeatedPassword) {
+        List<UserErrorRegister> userErrorLogins = new ArrayList<>();
+
+
+        UserErrorLogin emailError = emailCheck(email);
+        if (emailError != null) {
+            userErrorLogins.add(UserErrorRegister.valueOf(emailError.toString()));
+        }
+
+        UserErrorRegister passWordErrors = passwordCheck(password, repeatedPassword);
+        if (passWordErrors != null) {
+            userErrorLogins.add(passWordErrors);
+        }
+
+        return userErrorLogins;
+    }
+
     private static UserErrorLogin emailCheck(String email) {
         if (email.isBlank()) {
             return UserErrorLogin.EMPTY_EMAIL;

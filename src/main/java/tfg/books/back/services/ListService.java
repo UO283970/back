@@ -584,7 +584,7 @@ public class ListService {
             throw new RuntimeException(e);
         }
 
-        if (listOfBooks != null) {
+        if (listOfBooks != null && !listOfBooks.isEmpty()) {
             String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
 
             String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
