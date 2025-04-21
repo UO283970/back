@@ -4,14 +4,19 @@ on: [push]
 
 jobs:
   build:
-    name: My Job
     runs-on: ubuntu-latest
-      
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Read a variable
-        run: echo "${{secrets.SECRET_PASS_DECRYPTION_KEY}}"
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'  # o la versión que uses
+
+      - name: Run with Gradle and secret
         env:
           SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
+        run: |
+          ./gradlew bootRun --no-daemon
