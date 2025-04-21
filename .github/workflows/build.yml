@@ -10,5 +10,5 @@ jobs:
       - shell: bash
         env:
           SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
-        run: |
+        run:
           echo "${{SECRET_PASS_DECRYPTION_KEY}}"
