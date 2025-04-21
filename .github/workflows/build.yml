@@ -5,8 +5,6 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
     
     steps:
       - name: Checkout code
@@ -22,7 +20,9 @@ jobs:
         run: chmod +x gradlew
 
       - name: Show environment variables
-        run: env  # Este paso imprimirá todas las variables de entorno
+        run: env
       
       - name: Run with Gradle
-        run: ./gradlew build --no-daemon
+        run: |
+          export SECRET_PASS_DECRYPTION_KEY="${{ secrets.SECRET_PASS_DECRYPTION_KEY }}"
+          ./gradlew build --no-daemon
