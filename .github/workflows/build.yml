@@ -12,6 +12,6 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Read a variable
+        run: echo "${{secrets.SECRET_PASS_DECRYPTION_KEY}}"
         env:
           SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
-        run: echo "${{secrets.SECRET_PASS_DECRYPTION_KEY}}"
