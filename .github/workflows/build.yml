@@ -15,5 +15,3 @@ jobs:
 
       - name: Read a variable
         run: echo "${{secrets.SECRET_PASS_DECRYPTION_KEY}}"
-        with:
-          SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
