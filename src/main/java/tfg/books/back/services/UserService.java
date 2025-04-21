@@ -60,12 +60,14 @@ public class UserService {
     }
 
     public LoginUser login(@NotNull String email, @NotNull String password) {
-        List<UserErrorLogin> userErrorLogin = UserChecks.loginCheck(email, password);
+        String passDecrypted = PassDecryption.decrypt(password);
+
+        List<UserErrorLogin> userErrorLogin = UserChecks.loginCheck(email, passDecrypted);
         if (!userErrorLogin.isEmpty()) {
             return new LoginUser("", "", List.of());
         }
 
-        FirebaseSignInResponse response = firebaseAuthClient.login(email, password);
+        FirebaseSignInResponse response = firebaseAuthClient.login(email, passDecrypted);
 
         if (response.idToken() != null && !response.idToken().isEmpty()) {
             return new LoginUser(response.idToken(), response.refreshToken(), userErrorLogin);
@@ -88,10 +90,13 @@ public class UserService {
 
     }
 
-    public RegisterUser checkUserEmailAndPass(@NotNull String email, @NotNull String password, @NotNull String repeatedPassword) throws FirebaseAuthException {
+    public RegisterUser checkUserEmailAndPass(@NotNull String email, @NotNull String password, @NotNull String repeatedPassword){
 
-        List<UserErrorRegister> userErrorRegisterList = UserChecks.registerUserAndPassCheck(email, password,
-                repeatedPassword);
+        String passDecrypted = PassDecryption.decrypt(password);
+        String repeatedPassDecrypted = PassDecryption.decrypt(repeatedPassword);
+
+        List<UserErrorRegister> userErrorRegisterList = UserChecks.registerUserAndPassCheck(email, passDecrypted,
+                repeatedPassDecrypted);
         QuerySnapshot userEmailRepeat = null;
         try {
             userEmailRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
@@ -115,13 +120,17 @@ public class UserService {
     public RegisterUser create(@NotNull String email, @NotNull String password, @NotNull String repeatedPassword,
                                @NotNull String userAlias, @NotNull String userName,
                                @NotNull String profilePictureURL) throws FirebaseAuthException {
+
+        String passDecrypted = PassDecryption.decrypt(password);
+        String repeatedPassDecrypted = PassDecryption.decrypt(repeatedPassword);
+
         CreateRequest request = new CreateRequest();
         request.setEmail(email);
-        request.setPassword(password);
+        request.setPassword(passDecrypted);
 
         try {
-            List<UserErrorRegister> userErrorRegisterList = UserChecks.registerCheck(email, password,
-                    repeatedPassword, userAlias);
+            List<UserErrorRegister> userErrorRegisterList = UserChecks.registerCheck(email, passDecrypted,
+                    repeatedPassDecrypted, userAlias);
             QuerySnapshot userAliasRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
                     "userAlias", userAlias).get().get();
             QuerySnapshot userEmailRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
@@ -142,7 +151,7 @@ public class UserService {
             UserRecord userRecord = firebaseAuth.createUser(request);
             if (userRecord != null) {
 
-                FirebaseSignInResponse response = firebaseAuthClient.login(email, password);
+                FirebaseSignInResponse response = firebaseAuthClient.login(email, passDecrypted);
 
                 byte[] decodedBytes = Base64.getDecoder().decode(profilePictureURL);
                 String imageName = "images/" + userRecord.getUid() + ".jpg";
