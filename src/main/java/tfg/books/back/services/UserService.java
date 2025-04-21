@@ -47,20 +47,22 @@ public class UserService {
     private final Firestore firestore;
     private final StorageClient storage;
     private final ListService listService;
+    private final PassDecryption passDecryption;
 
     public UserService(FirebaseAuth firebaseAuth, AuthenticatedUserIdProvider authenticatedUserIdProvider,
                        Firestore firestore, FirebaseAuthClient firebaseAuthClient, StorageClient storage,
-                       ListService listService) {
+                       ListService listService, PassDecryption passDecryption) {
         this.firebaseAuthClient = firebaseAuthClient;
         this.firebaseAuth = firebaseAuth;
         this.authenticatedUserIdProvider = authenticatedUserIdProvider;
         this.firestore = firestore;
         this.storage = storage;
         this.listService = listService;
+        this.passDecryption = passDecryption;
     }
 
     public LoginUser login(@NotNull String email, @NotNull String password) {
-        String passDecrypted = new PassDecryption().decrypt(password);
+        String passDecrypted = passDecryption.decrypt(password);
 
         List<UserErrorLogin> userErrorLogin = UserChecks.loginCheck(email, passDecrypted);
         if (!userErrorLogin.isEmpty()) {
@@ -92,8 +94,8 @@ public class UserService {
 
     public RegisterUser checkUserEmailAndPass(@NotNull String email, @NotNull String password, @NotNull String repeatedPassword){
 
-        String passDecrypted = new PassDecryption().decrypt(password);
-        String repeatedPassDecrypted = new PassDecryption().decrypt(repeatedPassword);
+        String passDecrypted = passDecryption.decrypt(password);
+        String repeatedPassDecrypted = passDecryption.decrypt(repeatedPassword);
 
         List<UserErrorRegister> userErrorRegisterList = UserChecks.registerUserAndPassCheck(email, passDecrypted,
                 repeatedPassDecrypted);
@@ -121,8 +123,8 @@ public class UserService {
                                @NotNull String userAlias, @NotNull String userName,
                                @NotNull String profilePictureURL) throws FirebaseAuthException {
 
-        String passDecrypted = new PassDecryption().decrypt(password);
-        String repeatedPassDecrypted = new PassDecryption().decrypt(repeatedPassword);
+        String passDecrypted = passDecryption.decrypt(password);
+        String repeatedPassDecrypted = passDecryption.decrypt(repeatedPassword);
 
         CreateRequest request = new CreateRequest();
         request.setEmail(email);
