@@ -6,12 +6,12 @@ jobs:
   build:
     name: My Job
     runs-on: ubuntu-latest
-    env:
-      SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
       
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Read a variable
+        env:
+          SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
         run: echo "${{secrets.SECRET_PASS_DECRYPTION_KEY}}"
