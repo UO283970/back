@@ -8,15 +8,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Setup JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'  # o la versión que uses
-
+          java-version: '17'  # o la que uses
+      
+      - name: Give permission to Gradle wrapper
+        run: chmod +x gradlew
+      
       - name: Run with Gradle and secret
         env:
           SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
-        run: |
-          ./gradlew bootRun --no-daemon
+        run: ./gradlew bootRun --no-daemon
