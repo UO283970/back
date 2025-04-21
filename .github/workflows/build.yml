@@ -8,18 +8,5 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
         env:
           SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
-      
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-      
-      - name: Give permission to Gradle wrapper
-        run: chmod +x gradlew
-      
-      - name: Run with Gradle
-        run: ./gradlew build --no-daemon
