@@ -5,6 +5,9 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -13,12 +16,10 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'  # o la que uses
+          java-version: '17'
       
       - name: Give permission to Gradle wrapper
         run: chmod +x gradlew
       
       - name: Run with Gradle and secret
-        env:
-          SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
         run: ./gradlew build --no-daemon

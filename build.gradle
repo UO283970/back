@@ -6,6 +6,7 @@ plugins {
 
 group = 'tfg.books'
 version = '0.0.1-SNAPSHOT'
+SECRET_PASS_DECRYPTION_KEY = '$System.env.mySecretUser'
 
 java {
 	toolchain {
