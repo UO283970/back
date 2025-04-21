@@ -3,11 +3,11 @@ name: Backend
 on: [push]
 
 jobs:
-  example-job:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-    - shell: bash
-      env:
-        SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
-      run: |
-        example-command "$SECRET_PASS_DECRYPTION_KEY"
+      - name: Build with Gradle
+        run: ./gradlew build
+        env:
+          SECRET_PASS_DECRYPTION_KEY: ${{ secrets.SECRET_PASS_DECRYPTION_KEY }}
