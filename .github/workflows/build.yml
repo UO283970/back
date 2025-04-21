@@ -11,4 +11,4 @@ jobs:
       
     steps:
       - name: Read a variable
-        run: echo "${{SECRET_PASS_DECRYPTION_KEY}}"
+        run: echo "${{secrets.SECRET_PASS_DECRYPTION_KEY}}"
