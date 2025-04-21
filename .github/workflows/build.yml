@@ -21,5 +21,5 @@ jobs:
       - name: Give permission to Gradle wrapper
         run: chmod +x gradlew
       
-      - name: Run with Gradle and secret
+      - name: Run with Gradle
         run: ./gradlew build --no-daemon
