@@ -156,10 +156,9 @@ public class BookAPIService {
                 }
 
                 Double totalUsers = bookReference.getDouble("totalUsers");
+                Double meanScore = bookReference.getDouble("score");
                 assert score != null;
                 assert totalUsers != null;
-
-                Double meanScore = score / totalUsers;
 
                 List<String> userProfilePictures = new ArrayList<>();
 

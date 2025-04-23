@@ -121,20 +121,24 @@ public class UserActivityService {
             if (userActivityType.equals(UserActivityType.RATING)) {
                 DocumentReference activityExist =
                         firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).document(activityId);
-                Integer lastScore = activityExist.get().get().get("score", int.class);
 
                 if (activityExist.get().get().exists()) {
-                    Timestamp timestamp = activityExist.get().get().getTimestamp("timestamp");
-                    Timestamp timeNow = Timestamp.now();
+                    if (score == 0) {
+                        deleteActivity(activityId);
+                    } else {
+                        Integer lastScore = activityExist.get().get().get("score", int.class);
+                        Timestamp timestamp = activityExist.get().get().getTimestamp("timestamp");
+                        Timestamp timeNow = Timestamp.now();
 
-                    assert timestamp != null;
-                    if (timeNow.toDate().getTime() - timestamp.toDate().getTime() > TimeUnit.HOURS.toMillis(2)) {
-                        activityExist.update("timestamp", timeNow);
+                        assert timestamp != null;
+                        if (timeNow.toDate().getTime() - timestamp.toDate().getTime() > TimeUnit.HOURS.toMillis(2)) {
+                            activityExist.update("timestamp", timeNow);
+                        }
+                        activityExist.update("score", score);
+
+                        assert lastScore != null;
+                        updateBookScore(score, bookId, lastScore);
                     }
-                    activityExist.update("score", score);
-
-                    assert lastScore != null;
-                    updateBookScore(score, bookId, lastScore);
 
                     return true;
                 } else {
@@ -144,7 +148,8 @@ public class UserActivityService {
                             firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).document(activityIdReviewCheck);
 
                     if (reviewExist.get().get().exists()) {
-                        Timestamp timestamp = activityExist.get().get().getTimestamp("timestamp");
+                        Integer lastScore = reviewExist.get().get().get("score", int.class);
+                        Timestamp timestamp = reviewExist.get().get().getTimestamp("timestamp");
                         Timestamp timeNow = Timestamp.now();
 
                         assert timestamp != null;
@@ -154,7 +159,22 @@ public class UserActivityService {
                         reviewExist.update("score", score);
 
                         assert lastScore != null;
-                        updateBookScore(score, bookId, lastScore);
+
+                        DocumentReference bookExists =
+                                firestore.collection(AppFirebaseConstants.BOOKS_COLLECTION).document(bookId);
+
+                        if (bookExists.get().get().exists()) {
+                            if (score != 0) {
+                                updateBookScore(score, bookId, lastScore);
+                                bookExists.update("totalUsers", FieldValue.increment(1));
+                            }else{
+                                bookExists.update("score", FieldValue.increment(-lastScore));
+                                bookExists.update("totalUsers", FieldValue.increment(-1));
+                            }
+                        }else if(score != 0){
+                            bookExists.set(Map.of("score", score,
+                                    "totalUsers", 1));
+                        }
 
                         return true;
                     }
@@ -171,13 +191,16 @@ public class UserActivityService {
                 }
             }
 
-            DocumentReference bookExists = firestore.collection(AppFirebaseConstants.BOOKS_COLLECTION).document(bookId);
-            if (bookExists.get().get().exists()) {
-                bookExists.update("score", FieldValue.increment(score));
-                bookExists.update("totalUsers", FieldValue.increment(1));
-            } else {
-                bookExists.set(Map.of("score", score,
-                        "totalUsers", 1));
+            if (score != 0) {
+                DocumentReference bookExists =
+                        firestore.collection(AppFirebaseConstants.BOOKS_COLLECTION).document(bookId);
+                if (bookExists.get().get().exists()) {
+                    bookExists.update("score", FieldValue.increment(score));
+                    bookExists.update("totalUsers", FieldValue.increment(1));
+                } else {
+                    bookExists.set(Map.of("score", score,
+                            "totalUsers", 1));
+                }
             }
 
             firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).document(activityId)
@@ -195,7 +218,7 @@ public class UserActivityService {
         try {
             bookMeanScore =
                     firestore.collection(AppFirebaseConstants.BOOKS_COLLECTION).document(bookId).get().get().get(
-                    "score", double.class);
+                            "score", double.class);
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
