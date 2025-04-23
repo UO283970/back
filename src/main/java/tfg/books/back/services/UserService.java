@@ -465,6 +465,20 @@ public class UserService {
         return true;
     }
 
+    public UserForSearch getMinUserInfo() {
+        String userId = authenticatedUserIdProvider.getUserId();
+
+        try {
+            DocumentSnapshot user = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).get().get();
+            UserForSearch userWithoutId = user.toObject(UserForSearch.class);
+
+            assert userWithoutId != null;
+            return new UserForSearch(user.getId(),userWithoutId.userName(),userWithoutId.userAlias(),userWithoutId.profilePictureURL());
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public List<UserForSearch> getUserSearchInfo(@NotNull String userQuery) {
         List<QueryDocumentSnapshot> userDocument;
         List<UserForSearch> searchUsers = new ArrayList<>();

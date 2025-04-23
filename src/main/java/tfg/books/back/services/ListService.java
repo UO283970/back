@@ -579,7 +579,7 @@ public class ListService {
         try {
             listOfBooks = (firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(listId)
                     .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).orderBy(
-                            "timeAdded").limit(1).get().get());
+                            "timestamp").limit(1).get().get());
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }

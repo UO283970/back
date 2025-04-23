@@ -4,6 +4,7 @@ type Query{
     tokenCheck: Boolean!
     logout: String!
     refreshToken(oldRefreshToken: String!): String!
+    getMinUserInfo: User!
     getUserSearchInfo(userQuery: String!): [User!]!
     getAuthenticatedUserInfo: User!
     getAllUserInfo(userId: String!): User!
@@ -32,6 +33,7 @@ type Query{
     #Book queries
     searchBooks(userQuery: String!, searchFor: String!, subject: String!): [Book!]!
     nextPageBooks(userQuery: String!, page: Int!, searchFor: String!, subject: String!): [Book!]!
+    getExtraInfoForBook(bookId: String!): ExtraInfoForBook!
 }
 
 type Mutation{
@@ -156,6 +158,7 @@ type Book{
     description: String
     readingState: ReadingState!
     coverImageURL: String!
+    bookReviews: [UserActivity]!
 }
 
 enum ReadingState {
@@ -192,4 +195,13 @@ type Notification{
 enum NotificationType {
     FOLLOW,
     FOLLOWED
+}
+
+type ExtraInfoForBook{
+    userScore: Int!
+    meanScore: Float!
+    numberOfRatings: Int!
+    numberOfReviews: Int!
+    userProfilePictures: [String!]!
+    progress: Int!
 }

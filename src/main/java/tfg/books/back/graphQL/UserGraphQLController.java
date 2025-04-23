@@ -46,6 +46,11 @@ public class UserGraphQLController {
     }
 
     @QueryMapping
+    public UserForSearch getMinUserInfo() {
+        return userService.getMinUserInfo();
+    }
+
+    @QueryMapping
     public List<UserForSearch> getUserSearchInfo(@Argument("userQuery") String userQuery) {
         return userService.getUserSearchInfo(userQuery);
     }

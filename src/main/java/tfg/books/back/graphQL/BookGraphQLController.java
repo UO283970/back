@@ -4,6 +4,7 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 import tfg.books.back.model.books.Book;
+import tfg.books.back.model.books.ExtraInfoForBook;
 import tfg.books.back.services.BookAPIService;
 
 import java.util.List;
@@ -27,5 +28,10 @@ public class BookGraphQLController {
     public List<Book> nextPageBooks(@Argument("userQuery") String userQuery, @Argument("page") int page, @Argument(
             "searchFor") String searchFor, @Argument("subject") String subject) {
         return bookAPIService.nextPageBooks(userQuery, page, searchFor, subject);
+    }
+
+    @QueryMapping
+    public ExtraInfoForBook getExtraInfoForBook(@Argument("bookId") String bookId) {
+        return bookAPIService.getExtraInfoForBook(bookId);
     }
 }

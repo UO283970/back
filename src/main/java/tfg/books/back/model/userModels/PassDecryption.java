@@ -1,6 +1,5 @@
 package tfg.books.back.model.userModels;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.BadPaddingException;
@@ -19,11 +18,9 @@ import java.util.Base64;
 public class PassDecryption {
     private static final String INIT_VECTOR = "RandomInitVector";
 
-    @Value("${decryption-key}")
-    private String secretKey;
-
     public String decrypt(String encrypted) {
         IvParameterSpec ivParameterSpec = new IvParameterSpec(INIT_VECTOR.getBytes(StandardCharsets.UTF_8));
+        String secretKey = "m4jhg0vkd5rjg6lr";
         SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "AES");
 
         Cipher cipher = null;
