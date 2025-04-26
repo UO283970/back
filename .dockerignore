@@ -6,5 +6,4 @@ build
 *.iml
 # exclude hidden dirs .git etc.
 .*
-gradle
 src
