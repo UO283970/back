@@ -2,6 +2,7 @@ package tfg.books.back.graphQL;
 
 import java.util.Optional;
 
+import com.google.firebase.database.annotations.NotNull;
 import org.springframework.graphql.server.WebGraphQlInterceptor;
 import org.springframework.graphql.server.WebGraphQlRequest;
 import org.springframework.graphql.server.WebGraphQlResponse;
@@ -14,6 +15,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.NonNull;
 
 @Component
 public class GraphQLAuthInterceptor implements WebGraphQlInterceptor {
@@ -24,8 +26,9 @@ public class GraphQLAuthInterceptor implements WebGraphQlInterceptor {
         this.firebaseAuth = firebaseAuth;
     }
 
+    @NonNull
     @Override
-    public Mono<WebGraphQlResponse> intercept(WebGraphQlRequest request, Chain chain) {
+    public Mono<WebGraphQlResponse> intercept(@NotNull WebGraphQlRequest request,@NonNull Chain chain) {
         String authHeader = request.getHeaders().getFirst("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -35,10 +38,7 @@ public class GraphQLAuthInterceptor implements WebGraphQlInterceptor {
             if (userId.isPresent()) {
                 var authentication = new UsernamePasswordAuthenticationToken(userId.get(), null, null);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            }else{
-                return null;
             }
-
         }
 
         return chain.next(request);

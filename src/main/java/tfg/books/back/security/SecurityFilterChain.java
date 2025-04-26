@@ -11,7 +11,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityFilterChain {
 
-  private TokenAuthenticationFilter tokenAuthenticationFilter;
+  private final TokenAuthenticationFilter tokenAuthenticationFilter;
 
   public SecurityFilterChain(TokenAuthenticationFilter tokenAuthenticationFilter) {
       this.tokenAuthenticationFilter = tokenAuthenticationFilter;
@@ -21,12 +21,10 @@ public class SecurityFilterChain {
 public DefaultSecurityFilterChain configure(HttpSecurity http) throws Exception {
     http
       .csrf(csrf -> csrf.ignoringRequestMatchers("/graphql"))
-      .authorizeHttpRequests(authManager -> {
-        authManager
-          .requestMatchers("/graphql")
-          .permitAll()
-          .anyRequest().denyAll();
-      });
+      .authorizeHttpRequests(authManager -> authManager
+        .requestMatchers("/graphql")
+        .permitAll()
+        .anyRequest().denyAll());
 
       http.addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
