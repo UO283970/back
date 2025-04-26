@@ -2,10 +2,10 @@
 FROM gradle:8.5-jdk17 AS builder
 WORKDIR /build
 COPY --chown=gradle:gradle . .
-RUN gradle build --no-daemon && \
-    rm -rf .gradle
+RUN gradle build --no-daemon
+
 # Ahora el contenedor final: sólo con JDK para correr
-FROM eclipse-temurin:17-jdk-debian
+FROM eclipse-temurin:17-jdk-alpine
 
 # Creamos una carpeta para la app
 WORKDIR /app
