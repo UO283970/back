@@ -33,7 +33,7 @@ on:
 env:
   AWS_REGION: eu-north-1                   # set this to your preferred AWS region, e.g. us-west-1
   ECR_REPOSITORY: tfg-backend          # set this to your Amazon ECR repository name
-  ECS_SERVICE: mi_task-service-0z8h0wxw                 # set this to your Amazon ECS service name
+  ECS_SERVICE: tfg_backend_main_task-service-rkvp8w6c                 # set this to your Amazon ECS service name
   ECS_CLUSTER: tfg_backend_cluster                 # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION: .aws/task_definition.json # set this to the path to your Amazon ECS task definition
   # file, e.g. .aws/task-definition.json
