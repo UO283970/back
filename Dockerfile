@@ -1,8 +1,11 @@
+# Usamos una imagen JDK mínima solo para construir el .jar
 FROM gradle:8.5-jdk17 AS builder
 WORKDIR /build
 COPY --chown=gradle:gradle . .
+RUN gradle build --no-daemon
 
-FROM openjdk:17-jdk-alpine
+# Ahora el contenedor final: sólo con JDK para correr
+FROM eclipse-temurin:17-jdk-alpine
 
 # Creamos una carpeta para la app
 WORKDIR /app
