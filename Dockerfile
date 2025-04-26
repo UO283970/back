@@ -11,7 +11,7 @@ FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
 
 # Copiamos el jar construido desde el builder
-COPY --from=builder /build/build/libs/*.jar app.jar
+COPY --from=builder /build/libs/*.jar app.jar
 
 # Puerto expuesto
 EXPOSE 8080
