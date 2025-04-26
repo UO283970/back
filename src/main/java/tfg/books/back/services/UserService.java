@@ -10,12 +10,18 @@ import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.cloud.StorageClient;
 import com.google.firebase.database.annotations.NotNull;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import tfg.books.back.checks.UserChecks;
+import tfg.books.back.config.RestTemplateConfig;
 import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.firebase.AuthenticatedUserIdProvider;
 import tfg.books.back.firebase.FirebaseAuthClient;
 import tfg.books.back.model.books.Book;
+import tfg.books.back.model.books.BookCustomSerializer;
 import tfg.books.back.model.list.BookList;
 import tfg.books.back.model.list.DefaultListForFirebase;
 import tfg.books.back.model.notifications.Notification;
@@ -48,6 +54,9 @@ public class UserService {
     private final StorageClient storage;
     private final ListService listService;
     private final PassDecryption passDecryption;
+
+    @Autowired
+    RestTemplateConfig restTemplateConfig;
 
     public UserService(FirebaseAuth firebaseAuth, AuthenticatedUserIdProvider authenticatedUserIdProvider,
                        Firestore firestore, FirebaseAuthClient firebaseAuthClient, StorageClient storage,
@@ -485,6 +494,7 @@ public class UserService {
 
         try {
             userDocument = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereGreaterThanOrEqualTo(
+                    "userAlias", userQuery).whereLessThan("userAlias", userQuery + '\uf8ff').whereGreaterThanOrEqualTo(
                     "userName", userQuery).whereLessThan("userName", userQuery + '\uf8ff').get().get().getDocuments();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException("Unexpected error \n" + e);
@@ -681,7 +691,20 @@ public class UserService {
 
                     newUserActivity.setUser(getUserMinimalInfo(newUserActivity.getUserId()));
 
-                    newUserActivity.setBook(new Book());
+                    String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
+
+                    String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
+                                    newUserActivity.getBookId()),
+                            HttpMethod.GET, null, String.class).getBody();
+
+                    GsonBuilder builder = new GsonBuilder();
+                    builder.registerTypeAdapter(Book.class, new BookCustomSerializer());
+                    Gson gson = builder.create();
+
+                    Book book = gson.fromJson(bookFromApi, Book.class);
+
+                    book.setBookId(newUserActivity.getBookId());
+                    newUserActivity.setBook(book);
 
                     userFollowActivitiesForApp.add(newUserActivity);
 

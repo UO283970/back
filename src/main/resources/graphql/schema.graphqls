@@ -27,7 +27,7 @@ type Query{
 
 
     #User activity queries
-    getAllFollowedActivity: [UserActivity!]!
+    getAllFollowedActivity(timestamp: String!): [UserActivity!]!
     getAllReviewsForBook(bookId: String!): [UserActivity!]!
 
     #Book queries
@@ -178,6 +178,7 @@ type UserActivity{
     book: Book!
     userActivityType: UserActivityType!
     localDateTime: String!
+    timestamp: String!
 }
 
 enum UserActivityType{

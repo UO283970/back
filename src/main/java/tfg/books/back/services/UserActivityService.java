@@ -4,10 +4,16 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.firebase.database.annotations.NotNull;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import tfg.books.back.config.RestTemplateConfig;
 import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.firebase.AuthenticatedUserIdProvider;
 import tfg.books.back.model.books.Book;
+import tfg.books.back.model.books.BookCustomSerializer;
 import tfg.books.back.model.userActivity.UserActivity;
 import tfg.books.back.model.userActivity.UserActivity.UserActivityType;
 import tfg.books.back.model.userActivity.UserActivityFirebase;
@@ -27,6 +33,8 @@ public class UserActivityService {
     private final AuthenticatedUserIdProvider authenticatedUserIdProvider;
     private final Firestore firestore;
     private final UserService userService;
+    @Autowired
+    RestTemplateConfig restTemplateConfig;
 
     public UserActivityService(AuthenticatedUserIdProvider authenticatedUserIdProvider, Firestore firestore,
                                UserService userService) {
@@ -36,7 +44,7 @@ public class UserActivityService {
 
     }
 
-    public List<UserActivity> getAllFollowedActivity() {
+    public List<UserActivity> getAllFollowedActivity(@NotNull String timestamp) {
         String userId = authenticatedUserIdProvider.getUserId();
         List<UserForProfile> followingList = userService.getUsersListOFUser(userId,
                 AppFirebaseConstants.USERS_FOLLOWING_COLLECTION);
@@ -49,10 +57,16 @@ public class UserActivityService {
 
         if (!userIds.isEmpty()) {
             try {
-                QuerySnapshot userFollowActivities =
-                        firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereIn("userId", userIds).get().get();
+                Query userFollowActivities =
+                        firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereIn("userId", userIds).orderBy("timestamp",
+                                Query.Direction.DESCENDING).limit(10);
 
-                for (QueryDocumentSnapshot userActivity : userFollowActivities) {
+                if (!timestamp.isBlank()) {
+                    userFollowActivities = userFollowActivities.startAfter(Timestamp.parseTimestamp(timestamp));
+                }
+
+
+                for (QueryDocumentSnapshot userActivity : userFollowActivities.get().get()) {
                     UserActivity newUserActivity = userActivity.toObject(UserActivity.class);
                     newUserActivity.setId(userActivity.getId());
 
@@ -60,7 +74,18 @@ public class UserActivityService {
 
                     newUserActivity.setUser(userService.getUserMinimalInfo(newUserActivity.getUserId()));
 
-                    Book book = new Book();
+                    String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
+
+                    String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
+                                    newUserActivity.getBookId()),
+                            HttpMethod.GET, null, String.class).getBody();
+
+                    GsonBuilder builder = new GsonBuilder();
+                    builder.registerTypeAdapter(Book.class, new BookCustomSerializer());
+                    Gson gson = builder.create();
+
+                    Book book = gson.fromJson(bookFromApi, Book.class);
+
                     book.setBookId(newUserActivity.getBookId());
                     newUserActivity.setBook(book);
 

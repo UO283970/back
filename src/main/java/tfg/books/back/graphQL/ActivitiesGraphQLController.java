@@ -20,8 +20,8 @@ public class ActivitiesGraphQLController {
     }
 
     @QueryMapping
-    public List<UserActivity> getAllFollowedActivity() {
-        return userActivityService.getAllFollowedActivity();
+    public List<UserActivity> getAllFollowedActivity(@Argument("timestamp") String timestamp) {
+        return userActivityService.getAllFollowedActivity(timestamp);
     }
 
     @QueryMapping
