@@ -4,6 +4,3 @@ build
 .idea
 *.md
 *.iml
-# exclude hidden dirs .git etc.
-.*
-src
