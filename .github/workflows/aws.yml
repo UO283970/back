@@ -53,12 +53,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Change wrapper permissions
-        run: chmod +x ./gradlew
-      
-      - name: Build with Gradle
-        run: ./gradlew build
-
       - name: List build output
         run: ls -R build/libs
 
