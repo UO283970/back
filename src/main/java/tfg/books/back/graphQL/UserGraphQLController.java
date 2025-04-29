@@ -30,6 +30,11 @@ public class UserGraphQLController {
     }
 
     @QueryMapping
+    public Boolean resetPassword(@Argument("email") String email) {
+        return userService.resetPassword(email);
+    }
+
+    @QueryMapping
     public Boolean tokenCheck(){
         return userService.tokenCheck();
     }

@@ -101,6 +101,21 @@ public class UserService {
 
     }
 
+    public Boolean resetPassword(@NotNull String email){
+        try {
+            QuerySnapshot document = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo("email", email).get().get();
+
+            if(!document.isEmpty()){
+                firebaseAuth.generatePasswordResetLink(email);
+                return true;
+            }
+
+            return false;
+        } catch (FirebaseAuthException | ExecutionException | InterruptedException e) {
+            return false;
+        }
+    }
+
     public RegisterUser checkUserEmailAndPass(@NotNull String email, @NotNull String password, @NotNull String repeatedPassword){
 
         String passDecrypted = passDecryption.decrypt(password);

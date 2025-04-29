@@ -1,6 +1,7 @@
 type Query{
     #User queries
     login(email: String!, password: String!): UserLogin!
+    resetPassword(email: String!): Boolean!
     tokenCheck: Boolean!
     logout: String!
     refreshToken(oldRefreshToken: String!): String!
