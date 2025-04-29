@@ -16,8 +16,6 @@ public class Book {
     @NotNull
     private final Double meanScore;
     @NotNull
-    private final int userScore;
-    @NotNull
     private final List<String> subjects;
     @NotNull
     private final String description;
@@ -25,6 +23,8 @@ public class Book {
     private final String coverImageURL;
     @NotNull
     private final String publishYear;
+    @NotNull
+    private int userScore;
     @NotNull
     private String bookId;
     @NotNull
@@ -90,6 +90,10 @@ public class Book {
 
     public int getUserScore() {
         return this.userScore;
+    }
+
+    public void setUserScore(int userScore) {
+        this.userScore = userScore;
     }
 
     public List<String> getSubjects() {

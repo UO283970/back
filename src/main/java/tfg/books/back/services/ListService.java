@@ -147,7 +147,43 @@ public class ListService {
                             builder.registerTypeAdapter(Book.class, new BookCustomSerializer());
                             Gson gson = builder.create();
 
-                            listOfBooksOfList.add(gson.fromJson(bookFromApi, Book.class));
+                            Book bookInfo = gson.fromJson(bookFromApi, Book.class);
+
+                            bookInfo.setBookId(book.getId());
+
+                            DocumentSnapshot bookDocumentRelation;
+                            try {
+                                bookDocumentRelation =
+                                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
+                                                .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
+                                                .document(bookInfo.getBookId()).get().get();
+                            } catch (InterruptedException | ExecutionException e) {
+                                throw new RuntimeException(e);
+                            }
+
+                            if (bookDocumentRelation.exists()) {
+                                bookInfo.setReadingState(Book.ReadingState.valueOf(
+                                        AppFirebaseConstants.DEFAULT_LISTS.get(
+                                                Integer.parseInt(Objects.requireNonNull(bookDocumentRelation.getString("listId")))
+                                        )));
+                            } else {
+                                bookInfo.setReadingState(Book.ReadingState.NOT_IN_LIST);
+                            }
+
+                            Double score = 0.0;
+
+                            List<QueryDocumentSnapshot> bookDocument = firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo(
+                                    "bookId",
+                                    bookInfo.getBookId()).whereEqualTo("userId", bookList.getListUserId()).get().get().getDocuments();
+
+                            if(!bookDocument.isEmpty()){
+                                score = bookDocument.get(0).getDouble("score");
+                            }
+
+                            assert score != null;
+                            bookInfo.setUserScore(score.intValue());
+
+                            listOfBooksOfList.add(bookInfo);
 
                         }
 
@@ -247,7 +283,43 @@ public class ListService {
                     builder.registerTypeAdapter(Book.class, new BookCustomSerializer());
                     Gson gson = builder.create();
 
-                    listOfBooksOfList.add(gson.fromJson(bookFromApi, Book.class));
+                    Book bookInfo = gson.fromJson(bookFromApi, Book.class);
+
+                    bookInfo.setBookId(book.getId());
+
+                    DocumentSnapshot bookDocumentRelation;
+                    try {
+                        bookDocumentRelation =
+                                firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
+                                        .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
+                                        .document(bookInfo.getBookId()).get().get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    if (bookDocumentRelation.exists()) {
+                        bookInfo.setReadingState(Book.ReadingState.valueOf(
+                                AppFirebaseConstants.DEFAULT_LISTS.get(
+                                        Integer.parseInt(Objects.requireNonNull(bookDocumentRelation.getString("listId")))
+                                )));
+                    } else {
+                        bookInfo.setReadingState(Book.ReadingState.NOT_IN_LIST);
+                    }
+
+                    Double score = 0.0;
+
+                    List<QueryDocumentSnapshot> bookDocument = firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo(
+                            "bookId",
+                            bookInfo.getBookId()).whereEqualTo("userId", userId).get().get().getDocuments();
+
+                    if(!bookDocument.isEmpty()){
+                        score = bookDocument.get(0).getDouble("score");
+                    }
+
+                    assert score != null;
+                    bookInfo.setUserScore(score.intValue());
+
+                    listOfBooksOfList.add(bookInfo);
 
                 }
 
