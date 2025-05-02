@@ -233,6 +233,32 @@ public class ListService {
 
                     if (actualBookList.getNumberOfBooks() != 0) {
                         actualBookList.setListImage(getImageForDefaultList(userId, listDocument.getId()));
+
+                        if(listDocument.getId().equals("0")){
+                            List<Book> listOfBooksOfList = new ArrayList<>();
+
+                            QuerySnapshot listOfBooks = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                                    .collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).document(listDocument.getId())
+                                    .collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).limit(3).orderBy("timestamp").get().get();
+
+                            for (QueryDocumentSnapshot book : listOfBooks) {
+                                String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
+
+                                String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
+                                                book.getId()),
+                                        HttpMethod.GET, null, String.class).getBody();
+
+                                GsonBuilder builder = new GsonBuilder();
+                                builder.registerTypeAdapter(Book.class, new BookCustomSerializer());
+                                Gson gson = builder.create();
+
+                                Book bookInfo = gson.fromJson(bookFromApi, Book.class);
+
+                                listOfBooksOfList.add(bookInfo);
+                            }
+
+                            actualBookList.setListOfBooks(listOfBooksOfList);
+                        }
                     }
 
 
