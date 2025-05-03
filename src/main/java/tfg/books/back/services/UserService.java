@@ -508,9 +508,16 @@ public class UserService {
         List<UserForSearch> searchUsers = new ArrayList<>();
 
         try {
-            userDocument = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereGreaterThanOrEqualTo(
-                    "userAlias", userQuery).whereLessThan("userAlias", userQuery + '\uf8ff').whereGreaterThanOrEqualTo(
-                    "userName", userQuery).whereLessThan("userName", userQuery + '\uf8ff').get().get().getDocuments();
+            Set<QueryDocumentSnapshot> documentNoRepeat = new LinkedHashSet<>();
+
+            documentNoRepeat.addAll(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereGreaterThanOrEqualTo(
+                    "userName", userQuery).whereLessThan("userName", userQuery + '\uf8ff').get().get().getDocuments());
+
+            documentNoRepeat.addAll(firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereGreaterThanOrEqualTo(
+                    "userAlias", userQuery).whereLessThan("userAlias", userQuery + '\uf8ff').get().get().getDocuments());
+
+            userDocument = documentNoRepeat.stream().toList();
+
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException("Unexpected error \n" + e);
         }
