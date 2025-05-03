@@ -1,5 +1,6 @@
 package tfg.books.back.model.userModels;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.BadPaddingException;
@@ -15,28 +16,30 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 @Component
-public class PassDecryption {
-    private static final String INIT_VECTOR = "RandomInitVector";
+public class PassEncryption {
 
-    public String decrypt(String encrypted) {
-        IvParameterSpec ivParameterSpec = new IvParameterSpec(INIT_VECTOR.getBytes(StandardCharsets.UTF_8));
-        String secretKey = "m4jhg0vkd5rjg6lr";
-        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "AES");
+    @Value("${app.decryption-vector}")
+    private String init_vector;
+
+    @Value("${app.decryption-key}")
+    private String secretKey;
+
+    public String encrypt(String value) {
+        IvParameterSpec iv = new IvParameterSpec(init_vector.getBytes(StandardCharsets.UTF_8));
+        SecretKeySpec secretkeySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "AES");
 
         Cipher cipher = null;
+        byte[] encrypted;
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-
-            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
-
-            byte[] original = cipher.doFinal(Base64.getDecoder().decode(encrypted));
-            return new String(original);
-
+            cipher.init(Cipher.ENCRYPT_MODE, secretkeySpec, iv);
+            encrypted = cipher.doFinal(value.getBytes(StandardCharsets.UTF_8));
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException |
                  InvalidAlgorithmParameterException | BadPaddingException | InvalidKeyException e) {
             throw new RuntimeException(e);
         }
 
 
+        return Base64.getEncoder().encodeToString(encrypted);
     }
 }
