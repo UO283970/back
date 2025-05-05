@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import tfg.books.back.config.RestTemplateConfig;
@@ -30,6 +31,8 @@ public class BookAPIService {
     private final UserService userService;
     @Autowired
     RestTemplateConfig restTemplateConfig;
+    @Value("${app.google.api.key}")
+    private String googleApiKey;
 
     public BookAPIService(Firestore firestore, AuthenticatedUserIdProvider authenticatedUserIdProvider,
                           UserService userService) {
@@ -43,7 +46,7 @@ public class BookAPIService {
 
         String url = "https://www.googleapis.com/books/v1/volumes?q=" + searchFor + "{userQuery}{subject}&printType" +
                 "=books&orderBy" +
-                "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M&startIndex=0&maxResults=10";
+                "=relevance&key=" + googleApiKey + "&startIndex=0&maxResults=10";
 
         String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery)
                         .replace("{subject}", subject),
@@ -91,7 +94,7 @@ public class BookAPIService {
 
         String url = "https://www.googleapis.com/books/v1/volumes?q=" + searchFor + "{userQuery}{subject}&printType" +
                 "=books&orderBy" +
-                "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M&startIndex={page}&maxResults=15";
+                "=relevance&key=" + googleApiKey + "&startIndex={page}&maxResults=15";
 
         String bookFromApi =
                 restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery).replace("{page}",
