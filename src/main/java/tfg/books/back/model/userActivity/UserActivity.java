@@ -3,24 +3,24 @@ package tfg.books.back.model.userActivity;
 import com.google.cloud.Timestamp;
 import com.google.firebase.database.annotations.NotNull;
 import tfg.books.back.model.books.Book;
-import tfg.books.back.model.userModels.UserForSearch;
+import tfg.books.back.model.user.UserForSearch;
 
 public class UserActivity {
 
     @NotNull
     private final String activityText;
     @NotNull
-    private final String userId;
-    @NotNull
-    private final String bookId;
-    @NotNull
     private final int score;
     @NotNull
     private final UserActivityType userActivityType;
     @NotNull
-    private final Timestamp timestamp;
-    @NotNull
     String activityId;
+    @NotNull
+    private String userId;
+    @NotNull
+    private Timestamp timestamp;
+    @NotNull
+    private String bookId;
     @NotNull
     private String localDateTime;
     @NotNull
@@ -64,6 +64,10 @@ public class UserActivity {
         return userId;
     }
 
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     public int getScore() {
         return score;
     }
@@ -88,12 +92,20 @@ public class UserActivity {
         return bookId;
     }
 
+    public void setBookId(String bookId) {
+        this.bookId = bookId;
+    }
+
     public UserActivityType getUserActivityType() {
         return userActivityType;
     }
 
     public Timestamp getTimestamp() {
         return timestamp;
+    }
+
+    public void setTimestamp(Timestamp timestamp) {
+        this.timestamp = timestamp;
     }
 
     public String getLocalDateTime() {

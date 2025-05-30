@@ -5,8 +5,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
-import tfg.books.back.graphQLErrors.AppErrorConstants;
-import tfg.books.back.graphQLErrors.GraphQLCustomError;
 import tfg.books.back.requests.FirebaseSignInRequest;
 import tfg.books.back.requests.FirebaseSignInResponse;
 import tfg.books.back.requests.RefreshTokenRequest;
@@ -20,13 +18,17 @@ public class FirebaseAuthClient {
     private static final String REFRESH_TOKEN_GRANT_TYPE = "refresh_token";
 
     private static final String INVALID_CREDENTIALS_ERROR = "INVALID_LOGIN_CREDENTIALS";
+    private static final String INVALID_PASSWORD = "INVALID_PASSWORD";
     private static final String INVALID_REFRESH_TOKEN_ERROR = "INVALID_REFRESH_TOKEN";
-
-    private static final String SIGN_IN_BASE_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword";
     private static final String REFRESH_TOKEN_BASE_URL = "https://securetoken.googleapis.com/v1/token";
-
+    private String signInBaseUrl = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword";
     @Value("${firebase.api-key}")
     private String webApiKey;
+
+    public FirebaseAuthClient(@Value("${firebase.signIn.url:https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword}")
+                              String signInBaseUrl){
+        this.signInBaseUrl = signInBaseUrl;
+    }
 
     public FirebaseSignInResponse login(String emailId, String password) {
         FirebaseSignInRequest requestBody = new FirebaseSignInRequest(emailId, password, true);
@@ -35,7 +37,7 @@ public class FirebaseAuthClient {
 
     private FirebaseSignInResponse sendSignInRequest(FirebaseSignInRequest firebaseSignInRequest) {
         try {
-            return RestClient.create(SIGN_IN_BASE_URL)
+            return RestClient.create(signInBaseUrl)
                     .post()
                     .uri(uriBuilder -> uriBuilder
                             .queryParam(API_KEY_PARAM, webApiKey)
@@ -45,8 +47,8 @@ public class FirebaseAuthClient {
                     .retrieve()
                     .body(FirebaseSignInResponse.class);
         } catch (HttpClientErrorException exception) {
-            if (exception.getResponseBodyAsString().contains(INVALID_CREDENTIALS_ERROR)) {
-                throw new GraphQLCustomError("Invalid login credentials provided", AppErrorConstants.INVALID_LOGIN_CREDENTIALS);
+            if (exception.getResponseBodyAsString().contains(INVALID_CREDENTIALS_ERROR) || exception.getResponseBodyAsString().contains(INVALID_PASSWORD)) {
+                return new FirebaseSignInResponse("","");
             }
             throw exception;
         }

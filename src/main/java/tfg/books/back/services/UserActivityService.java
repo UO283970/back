@@ -6,7 +6,7 @@ import com.google.cloud.firestore.*;
 import com.google.firebase.database.annotations.NotNull;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import tfg.books.back.config.RestTemplateConfig;
@@ -14,10 +14,10 @@ import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.firebase.AuthenticatedUserIdProvider;
 import tfg.books.back.model.books.Book;
 import tfg.books.back.model.books.BookCustomSerializer;
+import tfg.books.back.model.user.UserForProfile;
 import tfg.books.back.model.userActivity.UserActivity;
 import tfg.books.back.model.userActivity.UserActivity.UserActivityType;
 import tfg.books.back.model.userActivity.UserActivityFirebase;
-import tfg.books.back.model.userModels.UserForProfile;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -33,14 +33,18 @@ public class UserActivityService {
     private final AuthenticatedUserIdProvider authenticatedUserIdProvider;
     private final Firestore firestore;
     private final UserService userService;
-    @Autowired
-    RestTemplateConfig restTemplateConfig;
+    private final RestTemplateConfig restTemplateConfig;
+    private final String googleBooksBaseUrl;
 
     public UserActivityService(AuthenticatedUserIdProvider authenticatedUserIdProvider, Firestore firestore,
-                               UserService userService) {
+                               UserService userService,RestTemplateConfig restTemplateConfig,
+                               @Value("${google.books.api.base-url:https://www.googleapis.com/books/v1/volumes/{bookId}}")
+                               String googleBooksBaseUrl) {
         this.authenticatedUserIdProvider = authenticatedUserIdProvider;
         this.firestore = firestore;
         this.userService = userService;
+        this.restTemplateConfig = restTemplateConfig;
+        this.googleBooksBaseUrl = googleBooksBaseUrl;
 
     }
 
@@ -65,7 +69,6 @@ public class UserActivityService {
                     userFollowActivities = userFollowActivities.startAfter(Timestamp.parseTimestamp(timestamp));
                 }
 
-
                 for (QueryDocumentSnapshot userActivity : userFollowActivities.get().get()) {
                     UserActivity newUserActivity = userActivity.toObject(UserActivity.class);
                     newUserActivity.setId(userActivity.getId());
@@ -74,9 +77,7 @@ public class UserActivityService {
 
                     newUserActivity.setUser(userService.getUserMinimalInfo(newUserActivity.getUserId()));
 
-                    String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
-
-                    String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
+                    String bookFromApi = restTemplateConfig.restTemplate().exchange(googleBooksBaseUrl.replace("{bookId}",
                                     newUserActivity.getBookId()),
                             HttpMethod.GET, null, String.class).getBody();
 
@@ -92,8 +93,6 @@ public class UserActivityService {
                     userFollowActivitiesForApp.add(newUserActivity);
 
                 }
-
-
                 return userFollowActivitiesForApp;
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
@@ -104,6 +103,10 @@ public class UserActivityService {
 
     public List<UserActivity> getAllReviewsForBook(String bookId) {
         List<UserActivity> userFollowActivitiesForApp = new ArrayList<>();
+
+        if (bookId.isBlank()) {
+            return userFollowActivitiesForApp;
+        }
 
         try {
             QuerySnapshot userFollowActivities =
@@ -140,7 +143,17 @@ public class UserActivityService {
                                @NotNull String bookId, @NotNull UserActivityType userActivityType) {
         String userId = authenticatedUserIdProvider.getUserId();
 
-        String activityId = userId + "|" + bookId + "|" + userActivityType.toString();
+        try {
+            UserActivityType.valueOf(userActivityType.toString());
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+
+        if ((activityText.isBlank() && userActivityType.equals(UserActivityType.REVIEW)) || score < 0 || score > 10 || bookId.isBlank()) {
+            return false;
+        }
+
+        String activityId = userId + "|" + bookId + "|" + userActivityType;
 
         try {
             if (userActivityType.equals(UserActivityType.RATING)) {
@@ -194,11 +207,11 @@ public class UserActivityService {
                                 bookExists.update("totalUsers", FieldValue.increment(1));
                             } else if (lastScore != 0) {
                                 updateBookScore(score, bookId, lastScore);
-                            }else{
+                            } else {
                                 bookExists.update("score", FieldValue.increment(-lastScore));
                                 bookExists.update("totalUsers", FieldValue.increment(-1));
                             }
-                        }else if(score != 0){
+                        } else if (score != 0) {
                             bookExists.set(Map.of("score", score,
                                     "totalUsers", 1));
                         }
@@ -236,7 +249,7 @@ public class UserActivityService {
 
             return true;
         } catch (InterruptedException | ExecutionException e) {
-            return false;
+            throw new RuntimeException(e);
         }
     }
 
@@ -278,25 +291,6 @@ public class UserActivityService {
                 }
 
                 docRef.delete();
-                return true;
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-
-        return false;
-    }
-
-    public Boolean updateActivity(@NotNull String activityId, @NotNull String activityText, @NotNull int score) {
-        DocumentReference docRef =
-                firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).document(activityId);
-        ApiFuture<DocumentSnapshot> future = docRef.get();
-
-        try {
-            DocumentSnapshot document = future.get();
-            if (document.exists()) {
-                docRef.update("activityText", activityText);
-                docRef.update("score", score);
                 return true;
             }
         } catch (InterruptedException | ExecutionException e) {

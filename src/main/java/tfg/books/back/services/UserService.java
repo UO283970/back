@@ -13,9 +13,10 @@ import com.google.firebase.database.annotations.NotNull;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import tfg.books.back.checks.UserChecks;
+import tfg.books.back.check.UserCheck;
 import tfg.books.back.config.RestTemplateConfig;
 import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.firebase.AuthenticatedUserIdProvider;
@@ -26,16 +27,15 @@ import tfg.books.back.model.list.BookList;
 import tfg.books.back.model.list.DefaultListForFirebase;
 import tfg.books.back.model.notifications.Notification;
 import tfg.books.back.model.notifications.NotificationsTypes;
+import tfg.books.back.model.user.*;
+import tfg.books.back.model.user.User.UserFollowState;
+import tfg.books.back.model.user.User.UserPrivacy;
 import tfg.books.back.model.userActivity.UserActivity;
-import tfg.books.back.model.userModels.*;
-import tfg.books.back.model.userModels.User.UserFollowState;
-import tfg.books.back.model.userModels.User.UserPrivacy;
 import tfg.books.back.requests.FirebaseSignInResponse;
 import tfg.books.back.requests.RefreshTokenResponse;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -54,13 +54,16 @@ public class UserService {
     private final StorageClient storage;
     private final ListService listService;
     private final PassEncryption passEncryption;
+    private final String googleBooksBaseUrl;
 
     @Autowired
     RestTemplateConfig restTemplateConfig;
 
     public UserService(FirebaseAuth firebaseAuth, AuthenticatedUserIdProvider authenticatedUserIdProvider,
                        Firestore firestore, FirebaseAuthClient firebaseAuthClient, StorageClient storage,
-                       ListService listService, PassEncryption passEncryption) {
+                       ListService listService, PassEncryption passEncryption,
+                       @Value("${google.books.api.base-url:https://www.googleapis.com/books/v1/volumes/{bookId}}")
+                       String googleBooksBaseUrl) {
         this.firebaseAuthClient = firebaseAuthClient;
         this.firebaseAuth = firebaseAuth;
         this.authenticatedUserIdProvider = authenticatedUserIdProvider;
@@ -68,12 +71,13 @@ public class UserService {
         this.storage = storage;
         this.listService = listService;
         this.passEncryption = passEncryption;
+        this.googleBooksBaseUrl = googleBooksBaseUrl;
     }
 
     public LoginUser login(@NotNull String email, @NotNull String password) {
-        List<UserErrorLogin> userErrorLogin = UserChecks.loginCheck(email, password);
+        List<UserErrorLogin> userErrorLogin = UserCheck.loginCheck(email, password);
         if (!userErrorLogin.isEmpty()) {
-            return new LoginUser("", "", List.of());
+            return new LoginUser("", "", userErrorLogin);
         }
 
         FirebaseSignInResponse response = firebaseAuthClient.login(email, passEncryption.encrypt(password));
@@ -86,7 +90,7 @@ public class UserService {
     }
 
     public Boolean tokenCheck() {
-        return !authenticatedUserIdProvider.getUserId().isBlank();
+        return authenticatedUserIdProvider.getUserId() != null;
     }
 
     public String refreshToken(@NotNull String oldRefreshToken) {
@@ -94,7 +98,7 @@ public class UserService {
         if (response.id_token() != null && !response.id_token().isEmpty()) {
             return response.id_token();
         } else {
-            throw new InvalidParameterException("User not found");
+            throw new RuntimeException("User not found");
         }
 
     }
@@ -115,9 +119,9 @@ public class UserService {
     }
 
     public RegisterUser checkUserEmailAndPass(@NotNull String email, @NotNull String password, @NotNull String repeatedPassword){
-        List<UserErrorRegister> userErrorRegisterList = UserChecks.registerUserAndPassCheck(email, password,
+        List<UserErrorRegister> userErrorRegisterList = UserCheck.registerUserAndPassCheck(email, password,
                 repeatedPassword);
-        QuerySnapshot userEmailRepeat = null;
+        QuerySnapshot userEmailRepeat;
         try {
             userEmailRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
                     "email", email).get().get();
@@ -139,18 +143,16 @@ public class UserService {
 
     public RegisterUser create(@NotNull String email, @NotNull String password, @NotNull String repeatedPassword,
                                @NotNull String userAlias, @NotNull String userName,
-                               @NotNull String profilePictureURL) throws FirebaseAuthException {
-        CreateRequest request = new CreateRequest();
-        request.setEmail(email);
-        request.setPassword(passEncryption.encrypt(password));
+                               @NotNull String profilePictureURL){
+        userAlias = userAlias.toLowerCase();
 
         try {
-            List<UserErrorRegister> userErrorRegisterList = UserChecks.registerCheck(email, password,
+            List<UserErrorRegister> userErrorRegisterList = UserCheck.registerCheck(email, password,
                     repeatedPassword, userAlias);
             QuerySnapshot userAliasRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
                     "userAlias", userAlias).get().get();
             QuerySnapshot userEmailRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
-                    "userEmail", email).get().get();
+                    "email", email).get().get();
 
             if (!userAliasRepeat.isEmpty()) {
                 userErrorRegisterList.add(UserErrorRegister.REPEATED_USER_ALIAS);
@@ -163,6 +165,10 @@ public class UserService {
             if (!userErrorRegisterList.isEmpty()) {
                 return new RegisterUser("", "", userErrorRegisterList);
             }
+
+            CreateRequest request = new CreateRequest();
+            request.setEmail(email);
+            request.setPassword(passEncryption.encrypt(password));
 
             UserRecord userRecord = firebaseAuth.createUser(request);
             if (userRecord != null) {
@@ -182,7 +188,7 @@ public class UserService {
                         bucket.getName(), URLEncoder.encode(imageName, StandardCharsets.UTF_8));
 
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userRecord.getUid()).
-                        set(new BasicInfoUser(userRecord.getEmail(), userName, userAlias, imageUrl, "",
+                        set(new BasicInfoUser(email, userName, userAlias, imageUrl, "",
                                 UserPrivacy.PUBLIC));
 
                 int count = 0;
@@ -202,16 +208,27 @@ public class UserService {
             if (exception.getMessage().contains(DUPLICATE_ACCOUNT_ERROR)) {
                 return new RegisterUser("", "", List.of(UserErrorRegister.ACCOUNT_EXISTS));
             }
-            throw exception;
         } catch (ExecutionException | InterruptedException e) {
             return new RegisterUser("", "", List.of(UserErrorRegister.UNKNOWN__));
         }
+        return new RegisterUser("", "", List.of(UserErrorRegister.UNKNOWN__));
     }
 
     public String update(@NotNull String userAlias, @NotNull String userName, @NotNull String profilePictureURL,
                          @NotNull String description, @NotNull UserPrivacy privacyLevel) {
         String userId = authenticatedUserIdProvider.getUserId();
         DocumentReference document = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
+
+        try {
+            UserPrivacy.valueOf(privacyLevel.toString());
+        } catch (IllegalArgumentException e) {
+            return "";
+        }
+
+        if(userAlias.isBlank()){
+            return "";
+        }
+
 
         try {
             if (!Objects.requireNonNull(document.get().get().get("userAlias")).toString().equals(userAlias)) {
@@ -254,6 +271,10 @@ public class UserService {
 
     public boolean delete() throws FirebaseAuthException {
         String userId = authenticatedUserIdProvider.getUserId();
+        if(userId == null || userId.isBlank()){
+            return false;
+        }
+
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
 
@@ -290,13 +311,18 @@ public class UserService {
 
     public Boolean deleteNotification(@NotNull String notificationId){
         String userId = authenticatedUserIdProvider.getUserId();
-        DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
+        if(userId == null || userId.isBlank()){
+            return false;
+        }
+
+        DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                .collection(AppFirebaseConstants.USERS_NOTIFICATIONS_COLLECTION).document(notificationId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
 
         try {
             DocumentSnapshot document = future.get();
             if (document.exists()) {
-                docRef.collection(AppFirebaseConstants.USERS_NOTIFICATIONS_COLLECTION).document(notificationId).delete();
+                docRef.delete();
             } else {
                 return false;
             }
@@ -307,14 +333,23 @@ public class UserService {
         return true;
     }
 
-    public String logout() throws FirebaseAuthException {
+    public String logout() {
         String userId = authenticatedUserIdProvider.getUserId();
-        firebaseAuth.revokeRefreshTokens(userId);
+        try {
+            firebaseAuth.revokeRefreshTokens(userId);
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
+        }
         return userId;
     }
 
     public UserFollowState followUser(@NotNull String friendId) {
         String userId = authenticatedUserIdProvider.getUserId();
+        if(userId == null || userId.isBlank()){
+            return UserFollowState.NOT_FOLLOW;
+        }
+
+
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         DocumentReference docRef2 = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(friendId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
@@ -378,6 +413,10 @@ public class UserService {
 
     public Boolean cancelFollow(@NotNull String friendId) {
         String userId = authenticatedUserIdProvider.getUserId();
+        if(userId == null || userId.isBlank()){
+            return false;
+        }
+
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         DocumentReference docRef2 = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(friendId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
@@ -404,6 +443,10 @@ public class UserService {
 
     public Boolean acceptRequest(@NotNull String friendId) {
         String userId = authenticatedUserIdProvider.getUserId();
+        if(userId == null || userId.isBlank()){
+            return false;
+        }
+
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         DocumentReference docRef2 = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(friendId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
@@ -435,6 +478,10 @@ public class UserService {
 
     public Boolean cancelRequest(@NotNull String friendId) {
         String userId = authenticatedUserIdProvider.getUserId();
+        if(userId == null || userId.isBlank()){
+            return false;
+        }
+
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         DocumentReference docRef2 = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(friendId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
@@ -457,6 +504,10 @@ public class UserService {
 
     public Boolean deleteFromFollower(@NotNull String friendId) {
         String userId = authenticatedUserIdProvider.getUserId();
+        if(userId == null || userId.isBlank()){
+            return false;
+        }
+
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         DocumentReference docRef2 = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(friendId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
@@ -487,7 +538,7 @@ public class UserService {
             UserForSearch userWithoutId = user.toObject(UserForSearch.class);
 
             assert userWithoutId != null;
-            return new UserForSearch(user.getId(),userWithoutId.userName(),userWithoutId.userAlias(),userWithoutId.profilePictureURL());
+            return new UserForSearch(userId,userWithoutId.userName(),userWithoutId.userAlias(),userWithoutId.profilePictureURL());
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -544,6 +595,10 @@ public class UserService {
 
     public UserForApp getAuthenticatedUserInfo() {
         String userId = authenticatedUserIdProvider.getUserId();
+        if(userId == null ||userId.isBlank()){
+            return null;
+        }
+
         DocumentReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId);
         ApiFuture<DocumentSnapshot> future = docRef.get();
 
@@ -703,9 +758,7 @@ public class UserService {
 
                     newUserActivity.setUser(getUserMinimalInfo(newUserActivity.getUserId()));
 
-                    String url = "https://www.googleapis.com/books/v1/volumes/{bookId}";
-
-                    String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{bookId}",
+                    String bookFromApi = restTemplateConfig.restTemplate().exchange(googleBooksBaseUrl.replace("{bookId}",
                                     newUserActivity.getBookId()),
                             HttpMethod.GET, null, String.class).getBody();
 
@@ -735,6 +788,9 @@ public class UserService {
     public List<UserForSearch> getUserFollowRequest() {
         String userId = authenticatedUserIdProvider.getUserId();
         List<UserForSearch> userRequests = new ArrayList<>();
+        if(userId == null || userId.isBlank()){
+            return userRequests;
+        }
 
         Iterable<DocumentReference> userRequest =
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
@@ -760,6 +816,10 @@ public class UserService {
 
     public List<Notification> getUserNotifications(@NotNull String timeStamp) {
         String userId = authenticatedUserIdProvider.getUserId();
+        if(userId == null || userId.isBlank()){
+            return new ArrayList<>();
+        }
+
         List<Notification> userNotifications = new ArrayList<>();
 
         try {
@@ -776,11 +836,16 @@ public class UserService {
             for (QueryDocumentSnapshot documentReference : userNotification) {
                 String notificationUserId = documentReference.getString("userId");
 
-                assert notificationUserId != null;
+                if(notificationUserId == null){
+                    return new ArrayList<>();
+                }
+
                 User user = firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
                         .document(notificationUserId).get().get().toObject(User.class);
 
-                assert user != null;
+                if(user == null){
+                    return new ArrayList<>();
+                }
 
                 if (firestore.collection(AppFirebaseConstants.USERS_COLLECTION)
                         .document(authenticatedUserIdProvider.getUserId())

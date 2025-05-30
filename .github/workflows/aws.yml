@@ -53,6 +53,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Firebase CLI
+        run: |
+          curl -sL https://firebase.tools | bash
+
+      - name: Start Firebase Emulator Suite
+        run: |
+          firebase emulators:start --only firestore,auth --project your-project-id --import=./seed --export-on-exit &
+          sleep 15
+
+      - name: Run tests
+        run: ./gradlew test
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -80,6 +98,7 @@ jobs:
       - name: Replace secrets in ECS task definition
         run: |
           sed -i "s/FIREBASE_API_KEY/${{ secrets.FIREBASE_API_KEY }}/g" $ECS_TASK_DEFINITION
+          sed -i "s/FIREBASE_API_KEY/${{ secrets.FIREBASE_SECRET_KEY }}/g" $ECS_TASK_DEFINITION
           sed -i "s/INIT_VECTOR_PASS/${{ secrets.INIT_VECTOR_PASS }}/g" $ECS_TASK_DEFINITION
           sed -i "s/SECRET_KEY/${{ secrets.SECRET_KEY }}/g" $ECS_TASK_DEFINITION
           sed -i "s/GOOGLE_API_KEY/${{ secrets.GOOGLE_API_KEY }}/g" $ECS_TASK_DEFINITION
