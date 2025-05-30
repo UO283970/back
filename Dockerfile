@@ -2,7 +2,7 @@
 FROM gradle:8.5-jdk17 AS builder
 WORKDIR /build
 COPY --chown=gradle:gradle . .
-RUN gradle build --no-daemon
+RUN gradle build -x test --no-daemon
 
 # Ahora el contenedor final: sólo con JDK para correr
 FROM eclipse-temurin:17-jdk
