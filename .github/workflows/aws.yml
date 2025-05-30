@@ -68,6 +68,9 @@ jobs:
           firebase emulators:start --only firestore,auth --project your-project-id --import=./seed --export-on-exit &
           sleep 15
 
+      - name: Dar permiso de ejecución a gradlew
+        run: chmod +x ./gradlew
+
       - name: Run tests
         run: ./gradlew test
 
