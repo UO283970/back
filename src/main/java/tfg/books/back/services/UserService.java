@@ -225,17 +225,38 @@ public class UserService {
             return "";
         }
 
-        if(userAlias.isBlank()){
+        if (userAlias.isBlank()) {
             return "";
         }
 
 
+        String imageUrl = "";
         try {
             if (!Objects.requireNonNull(document.get().get().get("userAlias")).toString().equals(userAlias)) {
                 QuerySnapshot userAliasRepeat;
 
                 userAliasRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
                         "userAlias", userAlias).get().get();
+
+                document.update("userAlias", userAlias).get();
+                document.update("userName", userName).get();
+                document.update("profilePictureURL", profilePictureURL).get();
+                document.update("description", description).get();
+                document.update("userPrivacy", privacyLevel.toString()).get();
+
+                byte[] decodedBytes = Base64.getDecoder().decode(profilePictureURL);
+                String imageName = "images/" + userId + ".jpg";
+
+                Bucket bucket = storage.bucket();
+
+                bucket.create(imageName, decodedBytes, "image/jpeg");
+
+                bucket.get(imageName);
+
+                imageUrl = String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media",
+                        bucket.getName(), URLEncoder.encode(imageName, StandardCharsets.UTF_8));
+
+                document.update("profilePictureURL", imageUrl).get();
 
 
                 if (userAliasRepeat != null && !userAliasRepeat.isEmpty()) {
@@ -245,26 +266,6 @@ public class UserService {
         } catch (InterruptedException | ExecutionException e) {
             return "";
         }
-
-        document.update("userAlias", userAlias);
-        document.update("userName", userName);
-        document.update("profilePictureURL", profilePictureURL);
-        document.update("description", description);
-        document.update("userPrivacy", privacyLevel.toString());
-
-        byte[] decodedBytes = Base64.getDecoder().decode(profilePictureURL);
-        String imageName = "images/" + userId + ".jpg";
-
-        Bucket bucket = storage.bucket();
-
-        bucket.create(imageName, decodedBytes, "image/jpeg");
-
-        bucket.get(imageName);
-
-        String imageUrl = String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media",
-                bucket.getName(), URLEncoder.encode(imageName, StandardCharsets.UTF_8));
-
-        document.update("profilePictureURL", imageUrl);
 
         return imageUrl;
     }

@@ -387,13 +387,13 @@ public class ListService {
                     .whereEqualTo("listUserId", userId).get().get().isEmpty() || listName.isBlank()) {
                 return "";
             }
+
+            ListForFirebaseWithTimestamp generatedList = new ListForFirebaseWithTimestamp(listName, description,
+                    bookListprivacy, userId, Timestamp.now());
+            firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(generatedID).set(generatedList).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-
-        ListForFirebaseWithTimestamp generatedList = new ListForFirebaseWithTimestamp(listName, description,
-                bookListprivacy, userId, Timestamp.now());
-        firestore.collection(AppFirebaseConstants.LIST_COLLECTION).document(generatedID).set(generatedList);
 
         return generatedID;
     }
