@@ -9,13 +9,13 @@ import java.util.List;
 public class BookList {
 
     @NotNull
-    private final String listUserId;
-    @NotNull
     private final String listName;
     @NotNull
     private final String description;
     @NotNull
-    private final BookListPrivacy bookListPrivacy;
+    private BookListPrivacy bookListPrivacy;
+    @NotNull
+    private String listUserId;
     @NotNull
     private String listImage;
     @NotNull
@@ -59,8 +59,16 @@ public class BookList {
         return listUserId;
     }
 
+    public void setListUserId(String listUserId) {
+        this.listUserId = listUserId;
+    }
+
     public BookListPrivacy getBookListPrivacy() {
         return bookListPrivacy;
+    }
+
+    public void setBookListPrivacy(BookListPrivacy bookListPrivacy) {
+        this.bookListPrivacy = bookListPrivacy;
     }
 
     public String getListName() {

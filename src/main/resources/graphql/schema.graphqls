@@ -1,6 +1,7 @@
 type Query{
     #User queries
     login(email: String!, password: String!): UserLogin!
+    resetPassword(email: String!): Boolean!
     tokenCheck: Boolean!
     logout: String!
     refreshToken(oldRefreshToken: String!): String!
@@ -21,7 +22,6 @@ type Query{
     getUserDefaultListsList(userId: String!): [BookList!]!
     getDefaultListsWithBook(bookId: String!): String!
     getListsWithBook(bookId: String!): [String!]!
-    searchLists(userQuery: String!): [BookList!]!
     getImageForDefaultList(listId: String!): String!
     getImageForList(listId: String!): String!
 
@@ -63,7 +63,6 @@ type Mutation{
     #User activity mutations
     addActivity(activityText : String!, score: Int!, bookId: String, userActivityType: UserActivityType): Boolean!
     deleteActivity(activityId: String!): Boolean!
-    updateActivity(activityId: String!, activityText : String!, score: Int!): Boolean!
 }
 
 type UserLogin{

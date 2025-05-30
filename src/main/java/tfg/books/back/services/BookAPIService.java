@@ -6,7 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import tfg.books.back.config.RestTemplateConfig;
@@ -28,58 +28,69 @@ public class BookAPIService {
     private final Firestore firestore;
     private final AuthenticatedUserIdProvider authenticatedUserIdProvider;
     private final UserService userService;
-    @Autowired
-    RestTemplateConfig restTemplateConfig;
+    private final RestTemplateConfig restTemplateConfig;
+    private final String googleBooksBaseUrl;
+    @Value("${app.google.api.key}")
+    private String googleApiKey;
 
     public BookAPIService(Firestore firestore, AuthenticatedUserIdProvider authenticatedUserIdProvider,
-                          UserService userService) {
+                          UserService userService,RestTemplateConfig restTemplateConfig,
+                          @Value("${google.books.api-url:https://www.googleapis.com/books/v1/volumes?q=}")
+                          String googleBooksBaseUrl) {
         this.firestore = firestore;
         this.authenticatedUserIdProvider = authenticatedUserIdProvider;
         this.userService = userService;
+        this.restTemplateConfig = restTemplateConfig;
+        this.googleBooksBaseUrl = googleBooksBaseUrl;
     }
 
     public List<Book> searchBooks(@NotNull String userQuery, @NotNull String searchFor, @NotNull String subject) {
         List<Book> resultOfQueryBooks = new ArrayList<>();
 
-        String url = "https://www.googleapis.com/books/v1/volumes?q=" + searchFor + "{userQuery}{subject}&printType" +
-                "=books&orderBy" +
-                "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M&startIndex=0&maxResults=10";
+        try{
 
-        String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery)
-                        .replace("{subject}", subject),
-                HttpMethod.GET, null, String.class).getBody();
+            String url = googleBooksBaseUrl + searchFor + "{userQuery}{subject}&printType" +
+                    "=books&orderBy" +
+                    "=relevance&key=" + googleApiKey + "&startIndex=0&maxResults=10";
 
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Book.class, new BookCustomSerializer());
-        Gson gson = builder.create();
+            String bookFromApi = restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery)
+                            .replace("{subject}", subject),
+                    HttpMethod.GET, null, String.class).getBody();
 
-        assert bookFromApi != null;
-        List<JsonElement> resultAsJSON =
-                JsonParser.parseString(bookFromApi).getAsJsonObject().get("items").getAsJsonArray().asList();
+            GsonBuilder builder = new GsonBuilder();
+            builder.registerTypeAdapter(Book.class, new BookCustomSerializer());
+            Gson gson = builder.create();
 
-        for (JsonElement bookDocs : resultAsJSON) {
-            Book bookForSearch = gson.fromJson(bookDocs, Book.class);
+            assert bookFromApi != null;
+            List<JsonElement> resultAsJSON =
+                    JsonParser.parseString(bookFromApi).getAsJsonObject().get("items").getAsJsonArray().asList();
 
-            DocumentSnapshot bookDocumentRelation;
-            try {
-                bookDocumentRelation =
-                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
-                                .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
-                                .document(bookForSearch.getBookId()).get().get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+            for (JsonElement bookDocs : resultAsJSON) {
+                Book bookForSearch = gson.fromJson(bookDocs, Book.class);
+
+                DocumentSnapshot bookDocumentRelation;
+                try {
+                    bookDocumentRelation =
+                            firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
+                                    .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
+                                    .document(bookForSearch.getBookId()).get().get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (bookDocumentRelation.exists()) {
+                    bookForSearch.setReadingState(Book.ReadingState.valueOf(
+                            AppFirebaseConstants.DEFAULT_LISTS.get(
+                                    Integer.parseInt(Objects.requireNonNull(bookDocumentRelation.getString("listId")))
+                            )));
+                } else {
+                    bookForSearch.setReadingState(Book.ReadingState.NOT_IN_LIST);
+                }
+
+                resultOfQueryBooks.add(bookForSearch);
             }
-
-            if (bookDocumentRelation.exists()) {
-                bookForSearch.setReadingState(Book.ReadingState.valueOf(
-                        AppFirebaseConstants.DEFAULT_LISTS.get(
-                                Integer.parseInt(Objects.requireNonNull(bookDocumentRelation.getString("listId")))
-                        )));
-            } else {
-                bookForSearch.setReadingState(Book.ReadingState.NOT_IN_LIST);
-            }
-
-            resultOfQueryBooks.add(bookForSearch);
+        }catch (IllegalArgumentException e){
+            throw new RuntimeException(e);
         }
 
         return resultOfQueryBooks;
@@ -89,52 +100,61 @@ public class BookAPIService {
                                     @NotNull String subject) {
         List<Book> resultOfQueryBooks = new ArrayList<>();
 
-        String url = "https://www.googleapis.com/books/v1/volumes?q=" + searchFor + "{userQuery}{subject}&printType" +
-                "=books&orderBy" +
-                "=relevance&key=AIzaSyBsCPK1yUlM5-Uq7yom_D74kNcJ9H2BP1M&startIndex={page}&maxResults=15";
+        try{
 
-        String bookFromApi =
-                restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery).replace("{page}",
-                                Integer.toString(page * 10)).replace("{subject}", subject),
-                        HttpMethod.GET, null, String.class).getBody();
+            String url = googleBooksBaseUrl + searchFor + "{userQuery}{subject}&printType" +
+                    "=books&orderBy" +
+                    "=relevance&key=" + googleApiKey + "&startIndex={page}&maxResults=15";
 
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Book.class, new BookCustomSerializer());
-        Gson gson = builder.create();
+            String bookFromApi =
+                    restTemplateConfig.restTemplate().exchange(url.replace("{userQuery}", userQuery).replace("{page}",
+                                    Integer.toString(page * 10)).replace("{subject}", subject),
+                            HttpMethod.GET, null, String.class).getBody();
 
-        assert bookFromApi != null;
-        List<JsonElement> resultAsJSON =
-                JsonParser.parseString(bookFromApi).getAsJsonObject().get("items").getAsJsonArray().asList();
+            GsonBuilder builder = new GsonBuilder();
+            builder.registerTypeAdapter(Book.class, new BookCustomSerializer());
+            Gson gson = builder.create();
 
-        for (JsonElement bookDocs : resultAsJSON) {
-            Book bookForSearch = gson.fromJson(bookDocs, Book.class);
+            assert bookFromApi != null;
+            List<JsonElement> resultAsJSON =
+                    JsonParser.parseString(bookFromApi).getAsJsonObject().get("items").getAsJsonArray().asList();
 
-            DocumentSnapshot bookDocumentRelation;
-            try {
-                bookDocumentRelation =
-                        firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
-                                .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
-                                .document(bookForSearch.getBookId()).get().get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+            for (JsonElement bookDocs : resultAsJSON) {
+                Book bookForSearch = gson.fromJson(bookDocs, Book.class);
+
+                DocumentSnapshot bookDocumentRelation;
+                try {
+                    bookDocumentRelation =
+                            firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(authenticatedUserIdProvider.getUserId())
+                                    .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
+                                    .document(bookForSearch.getBookId()).get().get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (bookDocumentRelation.exists()) {
+                    bookForSearch.setReadingState(Book.ReadingState.valueOf(
+                            AppFirebaseConstants.DEFAULT_LISTS.get(
+                                    Integer.parseInt(Objects.requireNonNull(bookDocumentRelation.getString("listId")))
+                            )));
+                } else {
+                    bookForSearch.setReadingState(Book.ReadingState.NOT_IN_LIST);
+                }
+
+                resultOfQueryBooks.add(bookForSearch);
             }
-
-            if (bookDocumentRelation.exists()) {
-                bookForSearch.setReadingState(Book.ReadingState.valueOf(
-                        AppFirebaseConstants.DEFAULT_LISTS.get(
-                                Integer.parseInt(Objects.requireNonNull(bookDocumentRelation.getString("listId")))
-                        )));
-            } else {
-                bookForSearch.setReadingState(Book.ReadingState.NOT_IN_LIST);
-            }
-
-            resultOfQueryBooks.add(bookForSearch);
+        }catch (IllegalArgumentException e){
+            throw new RuntimeException(e);
         }
 
         return resultOfQueryBooks;
     }
 
     public ExtraInfoForBook getExtraInfoForBook(@NotNull String bookId) {
+        if(bookId.isBlank()){
+            return new ExtraInfoForBook(0, 0.0, 0, List.of(), -1, 0);
+        }
+
         String userId = authenticatedUserIdProvider.getUserId();
 
         try {
