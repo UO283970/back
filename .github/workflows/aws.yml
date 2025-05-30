@@ -103,21 +103,26 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Replace secrets in ECS task definition
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_SECRET_KEY: ${{ secrets.FIREBASE_SECRET_KEY }}
+          INIT_VECTOR_PASS: ${{ secrets.INIT_VECTOR_PASS }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
-          jq \
-            --arg fapi "${{ secrets.FIREBASE_API_KEY }}" \
-            --arg fsecret "${{ secrets.FIREBASE_SECRET_KEY }}" \
-            --arg ivpass "${{ secrets.INIT_VECTOR_PASS }}" \
-            --arg skey "${{ secrets.SECRET_KEY }}" \
-            --arg gapi "${{ secrets.GOOGLE_API_KEY }}" \
-            '.containerDefinitions[0].environment |= map(
+          jq --arg fapi "$FIREBASE_API_KEY" \
+             --arg fsecret "$FIREBASE_SECRET_KEY" \
+             --arg ivpass "$INIT_VECTOR_PASS" \
+             --arg skey "$SECRET_KEY" \
+             --arg gapi "$GOOGLE_API_KEY" \
+             '.containerDefinitions[0].environment |= map(
                 if .name == "FIREBASE_API_KEY" then .value = $fapi
                 elif .name == "FIREBASE_SECRET_KEY" then .value = $fsecret
                 elif .name == "INIT_VECTOR_PASS" then .value = $ivpass
                 elif .name == "SECRET_KEY" then .value = $skey
                 elif .name == "GOOGLE_API_KEY" then .value = $gapi
                 else . end
-            )' $ECS_TASK_DEFINITION > tmp.json && mv tmp.json $ECS_TASK_DEFINITION
+             )' $ECS_TASK_DEFINITION > tmp.json && mv tmp.json $ECS_TASK_DEFINITION
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
