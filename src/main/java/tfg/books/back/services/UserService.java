@@ -238,6 +238,9 @@ public class UserService {
                 userAliasRepeat = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).whereEqualTo(
                         "userAlias", userAlias).get().get();
 
+                if (userAliasRepeat != null && !userAliasRepeat.isEmpty()) {
+                    return "";
+                }
                 document.update("userAlias", userAlias).get();
                 document.update("userName", userName).get();
                 document.update("profilePictureURL", profilePictureURL).get();
@@ -257,11 +260,6 @@ public class UserService {
                         bucket.getName(), URLEncoder.encode(imageName, StandardCharsets.UTF_8));
 
                 document.update("profilePictureURL", imageUrl).get();
-
-
-                if (userAliasRepeat != null && !userAliasRepeat.isEmpty()) {
-                    return "";
-                }
             }
         } catch (InterruptedException | ExecutionException e) {
             return "";
