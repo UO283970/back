@@ -81,9 +81,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -100,11 +104,20 @@ jobs:
 
       - name: Replace secrets in ECS task definition
         run: |
-          sed -i "s|FIREBASE_API_KEY|${{ secrets.FIREBASE_API_KEY }}|g" $ECS_TASK_DEFINITION
-          sed -i "s|FIREBASE_SECRET_KEY|${{ secrets.FIREBASE_SECRET_KEY }}|g" $ECS_TASK_DEFINITION
-          sed -i "s|INIT_VECTOR_PASS|${{ secrets.INIT_VECTOR_PASS }}|g" $ECS_TASK_DEFINITION
-          sed -i "s|SECRET_KEY|${{ secrets.SECRET_KEY }}|g" $ECS_TASK_DEFINITION
-          sed -i "s|GOOGLE_API_KEY|${{ secrets.GOOGLE_API_KEY }}|g" $ECS_TASK_DEFINITION
+          jq \
+            --arg fapi "${{ secrets.FIREBASE_API_KEY }}" \
+            --arg fsecret "${{ secrets.FIREBASE_SECRET_KEY }}" \
+            --arg ivpass "${{ secrets.INIT_VECTOR_PASS }}" \
+            --arg skey "${{ secrets.SECRET_KEY }}" \
+            --arg gapi "${{ secrets.GOOGLE_API_KEY }}" \
+            '.containerDefinitions[0].environment |= map(
+                if .name == "FIREBASE_API_KEY" then .value = $fapi
+                elif .name == "FIREBASE_SECRET_KEY" then .value = $fsecret
+                elif .name == "INIT_VECTOR_PASS" then .value = $ivpass
+                elif .name == "SECRET_KEY" then .value = $skey
+                elif .name == "GOOGLE_API_KEY" then .value = $gapi
+                else . end
+            )' $ECS_TASK_DEFINITION > tmp.json && mv tmp.json $ECS_TASK_DEFINITION
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
