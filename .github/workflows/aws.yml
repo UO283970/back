@@ -65,7 +65,7 @@ jobs:
 
       - name: Start Firebase Emulator Suite
         run: |
-          firebase emulators:start --only firestore,auth --project your-project-id --import=./seed --export-on-exit &
+          firebase emulators:start --only firestore,auth --project project-id &
           sleep 15
 
       - name: Dar permiso de ejecución a gradlew
