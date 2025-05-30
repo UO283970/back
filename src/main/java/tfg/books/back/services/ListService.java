@@ -486,11 +486,11 @@ public class ListService {
             if (document.exists()) {
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId).
                         collection(AppFirebaseConstants.USERS_DEFAULT_LISTS_COLLECTION).document(listId).
-                        collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).document(bookId).delete();
+                        collection(AppFirebaseConstants.INSIDE_BOOKS_LIST_COLLECTION).document(bookId).delete().get();
 
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
                         .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION)
-                        .document(bookId).delete();
+                        .document(bookId).delete().get();
 
 
                 return true;

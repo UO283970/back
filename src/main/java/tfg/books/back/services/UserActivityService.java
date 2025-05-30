@@ -204,16 +204,16 @@ public class UserActivityService {
                         if (bookExists.get().get().exists()) {
                             if (score != 0 && lastScore == 0) {
                                 updateBookScore(score, bookId, lastScore);
-                                bookExists.update("totalUsers", FieldValue.increment(1));
+                                bookExists.update("totalUsers", FieldValue.increment(1)).get();
                             } else if (lastScore != 0) {
                                 updateBookScore(score, bookId, lastScore);
                             } else {
-                                bookExists.update("score", FieldValue.increment(-lastScore));
-                                bookExists.update("totalUsers", FieldValue.increment(-1));
+                                bookExists.update("score", FieldValue.increment(-lastScore)).get();
+                                bookExists.update("totalUsers", FieldValue.increment(-1)).get();
                             }
                         } else if (score != 0) {
                             bookExists.set(Map.of("score", score,
-                                    "totalUsers", 1));
+                                    "totalUsers", 1)).get();
                         }
 
                         return true;
@@ -245,7 +245,7 @@ public class UserActivityService {
 
             firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).document(activityId)
                     .create(new UserActivityFirebase(activityText, score, userId, bookId, userActivityType,
-                            Timestamp.now()));
+                            Timestamp.now())).get();
 
             return true;
         } catch (InterruptedException | ExecutionException e) {
@@ -290,7 +290,7 @@ public class UserActivityService {
                     bookExists.update("totalUsers", FieldValue.increment(-1));
                 }
 
-                docRef.delete();
+                docRef.delete().get();
                 return true;
             }
         } catch (InterruptedException | ExecutionException e) {
