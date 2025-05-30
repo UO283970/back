@@ -101,6 +101,7 @@ public class AddActivityTest {
                 .get()
                 .get();
 
+        doc.wait();
         assertThat(doc.exists()).isTrue();
         assertThat(doc.getString("userId")).isEqualTo(userId);
         assertThat(doc.getString("bookId")).isEqualTo(bookId);
@@ -126,6 +127,7 @@ public class AddActivityTest {
                 .get()
                 .get();
 
+        doc.wait();
         assertThat(doc.exists()).isFalse();
     }
 
@@ -147,6 +149,7 @@ public class AddActivityTest {
                 .get()
                 .get();
 
+        doc.wait();
         assertThat(doc.exists()).isFalse();
     }
 
@@ -165,6 +168,8 @@ public class AddActivityTest {
                 .get()
                 .get();
 
+        doc.wait();
+
         Timestamp timestamp = doc.getTimestamp("timestamp");
 
         assertThat(doc.exists()).isTrue();
@@ -178,6 +183,7 @@ public class AddActivityTest {
                 .get()
                 .get();
 
+        doc2.wait();
         assertThat(doc.exists()).isTrue();
         assertThat(doc.getString("userId")).isEqualTo(userId);
         assertThat(doc.getString("bookId")).isEqualTo(bookId);
@@ -205,6 +211,7 @@ public class AddActivityTest {
                 .get()
                 .get();
 
+        doc.wait();
         assertThat(doc.exists()).isTrue();
         assertThat(doc.getString("userId")).isEqualTo(userId);
         assertThat(doc.getString("bookId")).isEqualTo(bookId);
@@ -235,6 +242,7 @@ public class AddActivityTest {
                 .get()
                 .get();
 
+        doc.wait();
         assertThat(doc.exists()).isTrue();
 
         Boolean activities = userActivityService.addActivity("Has text", score, bookId, userActivityType);
@@ -248,6 +256,7 @@ public class AddActivityTest {
                 .get()
                 .get();
 
+        doc2.wait();
         assertThat(doc2.exists()).isTrue();
         assertThat(doc2.getString("userId")).isEqualTo(userId);
         assertThat(doc2.getString("bookId")).isEqualTo(bookId);
@@ -262,6 +271,7 @@ public class AddActivityTest {
                 .get()
                 .get();
 
+        doc3.wait();
         assertThat(doc3.exists()).isFalse();
     }
 
@@ -283,6 +293,7 @@ public class AddActivityTest {
                 .get()
                 .get();
 
+        doc.wait();
         assertThat(doc.exists()).isTrue();
         assertThat(doc.getString("userId")).isEqualTo(userId);
         assertThat(doc.getString("bookId")).isEqualTo(bookId);
