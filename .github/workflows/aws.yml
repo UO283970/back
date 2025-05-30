@@ -71,8 +71,8 @@ jobs:
       - name: Dar permiso de ejecución a gradlew
         run: chmod +x ./gradlew
 
-      - name: Run tests
-        run: ./gradlew test
+      - name: Run Tests
+        run: ./gradlew test -Dspring.profiles.active=test
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1

@@ -16,6 +16,7 @@ java {
 test {
 	useJUnitPlatform()
 	environment "FIRESTORE_EMULATOR_HOST", "localhost:8080"
+	systemProperty "spring.profiles.active", "test"
 }
 
 repositories {
