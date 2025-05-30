@@ -100,11 +100,11 @@ jobs:
 
       - name: Replace secrets in ECS task definition
         run: |
-          sed -i "s/FIREBASE_API_KEY/${{ secrets.FIREBASE_API_KEY }}/g" $ECS_TASK_DEFINITION
-          sed -i "s/FIREBASE_SECRET_KEY/${{ secrets.FIREBASE_SECRET_KEY }}/g" $ECS_TASK_DEFINITION
-          sed -i "s/INIT_VECTOR_PASS/${{ secrets.INIT_VECTOR_PASS }}/g" $ECS_TASK_DEFINITION
-          sed -i "s/SECRET_KEY/${{ secrets.SECRET_KEY }}/g" $ECS_TASK_DEFINITION
-          sed -i "s/GOOGLE_API_KEY/${{ secrets.GOOGLE_API_KEY }}/g" $ECS_TASK_DEFINITION
+          sed -i "s|FIREBASE_API_KEY|${{ secrets.FIREBASE_API_KEY }}|g" $ECS_TASK_DEFINITION
+          sed -i "s|FIREBASE_SECRET_KEY|${{ secrets.FIREBASE_SECRET_KEY }}|g" $ECS_TASK_DEFINITION
+          sed -i "s|INIT_VECTOR_PASS|${{ secrets.INIT_VECTOR_PASS }}|g" $ECS_TASK_DEFINITION
+          sed -i "s|SECRET_KEY|${{ secrets.SECRET_KEY }}|g" $ECS_TASK_DEFINITION
+          sed -i "s|GOOGLE_API_KEY|${{ secrets.GOOGLE_API_KEY }}|g" $ECS_TASK_DEFINITION
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
