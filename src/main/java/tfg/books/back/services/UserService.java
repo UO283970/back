@@ -491,7 +491,7 @@ public class UserService {
             DocumentSnapshot document2 = future2.get();
             if (document.exists() && document2.exists()) {
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
-                        .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).document(friendId).delete();
+                        .collection(AppFirebaseConstants.USERS_REQUESTS_COLLECTION).document(friendId).delete().get();
             } else {
                 return false;
             }
@@ -517,9 +517,9 @@ public class UserService {
             DocumentSnapshot document2 = future2.get();
             if (document.exists() && document2.exists()) {
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(friendId)
-                        .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).document(userId).delete();
+                        .collection(AppFirebaseConstants.USERS_FOLLOWING_COLLECTION).document(userId).delete().get();
                 firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
-                        .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(friendId).delete();
+                        .collection(AppFirebaseConstants.USERS_FOLLOWERS_COLLECTION).document(friendId).delete().get();
             } else {
                 return false;
             }
