@@ -286,8 +286,8 @@ public class UserActivityService {
                 DocumentReference bookExists =
                         firestore.collection(AppFirebaseConstants.BOOKS_COLLECTION).document(bookId);
                 if (bookExists.get().get().exists()) {
-                    bookExists.update("score", FieldValue.increment(-score));
-                    bookExists.update("totalUsers", FieldValue.increment(-1));
+                    bookExists.update("score", FieldValue.increment(-score)).get();
+                    bookExists.update("totalUsers", FieldValue.increment(-1)).get();
                 }
 
                 docRef.delete();
