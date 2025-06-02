@@ -290,7 +290,7 @@ public class UserActivityService {
                     bookExists.update("totalUsers", FieldValue.increment(-1)).get();
                 }
 
-                docRef.delete();
+                docRef.delete().get();
                 return true;
             }
         } catch (InterruptedException | ExecutionException e) {
