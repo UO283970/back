@@ -28,12 +28,13 @@ public class FirebaseInitializer {
         if (FirebaseApp.getApps().isEmpty()) {
             ByteArrayInputStream serviceAccount = new ByteArrayInputStream(firebaseConfig.getBytes(StandardCharsets.UTF_8));
 
-            assert serviceAccount != null;
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setStorageBucket("tfgbooks-8c31b.firebasestorage.app")
                     .build();
+
             return FirebaseApp.initializeApp(options);
+
         }
         
         return FirebaseApp.getInstance();

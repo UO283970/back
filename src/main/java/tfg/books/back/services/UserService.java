@@ -292,6 +292,19 @@ public class UserService {
                 for (QueryDocumentSnapshot activity :
                         firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).whereEqualTo("userId",
                                 userId).get().get()) {
+                    String bookId = activity.getString("bookId");
+                    Integer score = activity.get("score", int.class);
+
+                    assert bookId != null;
+                    assert score != null;
+
+                    DocumentReference bookExists =
+                            firestore.collection(AppFirebaseConstants.BOOKS_COLLECTION).document(bookId);
+                    if (bookExists.get().get().exists()) {
+                        bookExists.update("score", FieldValue.increment(-score));
+                        bookExists.update("totalUsers", FieldValue.increment(-1));
+                    }
+
                     firestore.collection(AppFirebaseConstants.ACTIVITIES_COLLECTION).document(activity.getId()).delete();
                 }
                 for (QueryDocumentSnapshot list :
@@ -328,6 +341,31 @@ public class UserService {
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
+        }
+
+        return true;
+    }
+
+    public Boolean deleteAllNotification(){
+        String userId = authenticatedUserIdProvider.getUserId();
+        if(userId == null || userId.isBlank()){
+            return false;
+        }
+
+        CollectionReference docRef = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
+                .collection(AppFirebaseConstants.USERS_NOTIFICATIONS_COLLECTION);
+
+        for(DocumentReference future : docRef.listDocuments()){
+            try {
+                DocumentSnapshot document = future.get().get();
+                if (document.exists()) {
+                    future.delete();
+                } else {
+                    return false;
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         return true;
@@ -628,7 +666,7 @@ public class UserService {
 
 
                 assert basicInfoUser != null;
-                return new UserForApp(userId, basicInfoUser.userName(), basicInfoUser.userAlias(),
+                return new UserForApp(userId, basicInfoUser.email(),basicInfoUser.userName(), basicInfoUser.userAlias(),
                         basicInfoUser.profilePictureURL(), basicInfoUser.description(), basicInfoUser.userPrivacy(),
                         numberOfFollowers, numberOfFollowing, numberOfReviews, defaultUserList, bookList,
                         userFollowState);
@@ -676,7 +714,7 @@ public class UserService {
                 List<BookList> defaultUserList = listService.getDefaultUserLists(userId);
                 List<BookList> userLists = listService.getBasicListInfoList(userId);
 
-                return new UserForApp(userId, basicInfoUser.userName(), basicInfoUser.userAlias(),
+                return new UserForApp(userId, basicInfoUser.email(),basicInfoUser.userName(), basicInfoUser.userAlias(),
                         basicInfoUser.profilePictureURL(), basicInfoUser.description(), basicInfoUser.userPrivacy(),
                         numberOfFollowers, numberOfFollowing, numberOfReviews, defaultUserList, userLists,
                         userFollowState);
@@ -857,7 +895,7 @@ public class UserService {
                     user.setUserFollowState(UserFollowState.REQUESTED);
                 }
 
-                userNotifications.add(new Notification(documentReference.getId(), new UserForProfile(userId,
+                userNotifications.add(new Notification(documentReference.getId(), new UserForProfile(notificationUserId,
                         user.getUserName(), user.getUserAlias(), user.getProfilePictureURL(),
                         user.getUserFollowState()),
                         NotificationsTypes.valueOf(documentReference.getString("notificationType")),

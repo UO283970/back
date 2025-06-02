@@ -205,7 +205,7 @@ public class UserActivityService {
                             if (score != 0 && lastScore == 0) {
                                 updateBookScore(score, bookId, lastScore);
                                 bookExists.update("totalUsers", FieldValue.increment(1));
-                            } else if (lastScore != 0) {
+                            } else if (lastScore != 0 && score != 0 ) {
                                 updateBookScore(score, bookId, lastScore);
                             } else {
                                 bookExists.update("score", FieldValue.increment(-lastScore));
