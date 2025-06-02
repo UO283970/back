@@ -43,6 +43,7 @@ type Mutation{
     updateUser(userAlias: String!, userName: String!, profilePictureURL: String!, description: String!, privacyLevel: UserPrivacy!): String!
     deleteUser: Boolean!
     deleteNotification(notificationId: String!): Boolean!
+    deleteAllNotification: Boolean!
 
     #Follow mutations
     followUser(friendId: String!): UserFollowState!
@@ -99,6 +100,7 @@ enum UserRegisterErrors{
 type User{
     userId: String!
     userName: String!
+    userEmail: String!
     userAlias: String!
     profilePictureURL: String!
     description: String!

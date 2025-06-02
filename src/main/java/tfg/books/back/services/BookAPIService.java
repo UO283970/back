@@ -171,12 +171,16 @@ public class BookAPIService {
                         "bookId",
                         bookId).whereEqualTo("userId", userId).get().get().getDocuments();
 
-                if(!document.isEmpty()){
+                if (!document.isEmpty()) {
                     score = document.get(0).getDouble("score");
                 }
 
-                Double totalUsers = bookReference.getDouble("totalUsers");
-                Double meanScore = bookReference.getDouble("score");
+                Double totalUsers = 0.0;
+                Double meanScore = 0.0;
+                if (bookReference.exists()) {
+                    totalUsers = bookReference.getDouble("totalUsers");
+                    meanScore = bookReference.getDouble("score");
+                }
                 assert score != null;
                 assert totalUsers != null;
 
@@ -200,11 +204,11 @@ public class BookAPIService {
                 int progress = -1;
                 DocumentReference progressDocument = firestore.collection(AppFirebaseConstants.USERS_COLLECTION).document(userId)
                         .collection(AppFirebaseConstants.BOOKS_DEFAULT_LIST_RELATION_COLLECTION).document(bookId);
-                if(progressDocument.get().get().exists()){
+                if (progressDocument.get().get().exists()) {
                     progressDocument.get().get().getDouble("progress");
                 }
 
-                return new ExtraInfoForBook(score.intValue(), meanScore, numberOfReviews, userProfilePictures,progress, totalUsers.intValue());
+                return new ExtraInfoForBook(score.intValue(), meanScore, numberOfReviews, userProfilePictures, progress, totalUsers.intValue());
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);

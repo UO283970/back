@@ -149,4 +149,9 @@ public class UserGraphQLController {
     public Boolean deleteNotification(@Argument("notificationId") String notificationId){
         return userService.deleteNotification(notificationId);
     }
+
+    @MutationMapping
+    public Boolean deleteAllNotification(){
+        return userService.deleteAllNotification();
+    }
 }
