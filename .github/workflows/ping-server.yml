@@ -1,0 +1,12 @@
+name: Keep Render App Alive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send ping to Render app
+        run: curl -s https://bookvers.onrender.com > /dev/null
