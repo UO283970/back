@@ -4,7 +4,9 @@ import com.google.firebase.auth.FirebaseAuthException;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import tfg.books.back.firebase.AppFirebaseConstants;
 import tfg.books.back.model.notifications.Notification;
 import tfg.books.back.model.user.*;
@@ -153,5 +155,11 @@ public class UserGraphQLController {
     @MutationMapping
     public Boolean deleteAllNotification(){
         return userService.deleteAllNotification();
+    }
+
+    //Usage only for maintaining alive the server
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("pong");
     }
 }

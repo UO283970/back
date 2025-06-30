@@ -24,6 +24,7 @@ public DefaultSecurityFilterChain configure(HttpSecurity http) throws Exception 
       .csrf(AbstractHttpConfigurer::disable)
       .authorizeHttpRequests(authManager -> authManager
         .requestMatchers("/graphql")
+        .permitAll().requestMatchers("/ping")
         .permitAll()
         .anyRequest().denyAll());
 

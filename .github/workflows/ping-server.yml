@@ -9,4 +9,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send ping to Render app
-        run: curl -s https://bookvers.onrender.com > /dev/null
+        run: curl -s https://bookvers.onrender.com/ping > /dev/null
